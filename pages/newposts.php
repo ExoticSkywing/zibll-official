@@ -396,7 +396,7 @@ function zib_newpost_get_paybox($in_id = 0)
         'pay_modo'     => '0',
         'points_price' => '',
         'vip_1_points' => '',
-        'vip_2_points' => '',
+        'vip_2_points' => '', 
         'pay_price'    => '',
         'vip_1_price'  => '',
         'vip_2_price'  => '',
@@ -456,7 +456,7 @@ function zib_newpost_get_paybox($in_id = 0)
     if ($vip_input_s && $vip_1_s) {
         $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '价格</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_price]" value="' . $in['vip_1_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_price]" value="' . $in['vip_1_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';
@@ -464,7 +464,7 @@ function zib_newpost_get_paybox($in_id = 0)
     if ($vip_input_s && $vip_2_s) {
         $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '价格</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_price]" value="' . $in['vip_2_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_price]" value="' . $in['vip_2_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';
@@ -496,7 +496,7 @@ function zib_newpost_get_paybox($in_id = 0)
     if ($vip_input_s && $vip_1_s) {
         $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '积分</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_points]" value="' . $in['vip_1_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '积分</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_points]" value="' . $in['vip_1_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';
@@ -504,7 +504,7 @@ function zib_newpost_get_paybox($in_id = 0)
     if ($vip_input_s && $vip_2_s) {
         $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '积分</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_points]" value="' . $in['vip_2_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '积分</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_points]" value="' . $in['vip_2_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';

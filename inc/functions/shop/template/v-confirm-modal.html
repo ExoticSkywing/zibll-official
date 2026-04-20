@@ -70,7 +70,7 @@
                 <div class="confirm-product-item" v-for="( opt_items , product_id ) in product_items" :key="'item-' + author_id + '-' + product_id">
                     <div class="cart-list-item confirm-list-item" :class="!config.author_show ? 'zib-widget mb10-sm' : ''" v-for="( opt_data , opt_key ) in opt_items" :key="'item-' + author_id + '-' + product_id + '-' + opt_key">
                         <div class="cart-list-header flex ac jsb list-header">
-                            <div class="item-thumbnail product-graphic" v-html="product_data[opt_data.product_id].thumbnail"></div>
+                            <div class="item-thumbnail product-graphic nowave"><img imgbox-no-cache="true" class="alone-imgbox-img" :src="opt_data.product_image" :alt="product_data[product_id].title"></div>
                             <div class="flex1 flex">
                                 <div class="cart-col-product flex1 mr10">
                                     <div class="product-title text-ellipsis" v-html="product_data[opt_data.product_id].title"></div>

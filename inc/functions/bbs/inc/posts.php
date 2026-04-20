@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2026-01-29 15:23:55
+ * @LastEditTime : 2026-03-14 15:32:27
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|帖子类函数
@@ -551,6 +551,33 @@ function zib_bbs_get_allow_view_data($post = null)
     $title     = '';
 
     switch ($allow_view) {
+        case 'signin':
+            $data['html'] = '<p class="separator muted-3-color em09">登录后可查看</p>';
+            if (!$user_id) {
+                $title = '内容已隐藏，请登录后查看';
+                $con   = '<div class="text-center em09 mt20"><p class="separator muted-3-color mb20">登录后继续查看</p>' . $sign_btns . '</div>';
+            } elseif (!$data['allow_reason']) {
+                $data['allow_reason'] = '您已登录，可查看此内容';
+            }
+            break;
+
+        case 'follow':
+            $data['html'] = '<p class="separator muted-3-color em09">' . $zib_bbs->plate_follow_name . '后可查看</p>';
+            if (!zib_bbs_is_followed_plate($posts_id, $user_id)) {
+                $title = '内容已隐藏，' . $zib_bbs->plate_follow_name . '后可查看';
+
+                if (!$user_id) {
+                    $con = '<div class="text-center em09 mt20"><p class="separator muted-3-color mb20">请先登录</p>' . $sign_btns . '</div>';
+                } else {
+                    $follow_btn = zib_bbs_get_all_plate_follow_btn($posts_id, 'but hollow c-red padding-lg', zib_get_svg('add') . ' 立即' . $zib_bbs->plate_follow_name);
+                    $con        = '<div class="text-center em09 mt20"><p class="separator muted-3-color mb20">' . $zib_bbs->plate_follow_name . '后继续查看</p>' . $follow_btn . '</div>';
+                }
+
+            } elseif (!$data['allow_reason']) {
+                $data['allow_reason'] = '您已' . $zib_bbs->plate_follow_name . '，可查看此内容';
+            }
+            break;
+
         case 'pay':
         case 'points':
             $pay_mate = get_post_meta($posts_id, 'posts_zibpay', true);
@@ -580,16 +607,6 @@ function zib_bbs_get_allow_view_data($post = null)
                             $data['allow_reason'] = '您已购买此付费内容';
                     }
                 }
-            }
-            break;
-
-        case 'signin':
-            $data['html'] = '<p class="separator muted-3-color em09">登录后可查看</p>';
-            if (!$user_id) {
-                $title = '内容已隐藏，请登录后查看';
-                $con   = '<div class="text-center em09 mt20"><p class="separator muted-3-color mb20">登录后继续查看</p>' . $sign_btns . '</div>';
-            } elseif (!$data['allow_reason']) {
-                $data['allow_reason'] = '您已登录，可查看此内容';
             }
             break;
 

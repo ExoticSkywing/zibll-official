@@ -4925,7 +4925,7 @@
             category: 'zibll_block_cat',
             description: '和主题样式匹配的文章标题，可自定义颜色',
             className: false,
-            textdomain: "default",
+            textdomain: 'default',
             attributes: {
                 content: {
                     type: 'array',
@@ -5322,7 +5322,15 @@
                                         {
                                             className: 'block-editor-block-card__description',
                                         },
-                                        '付费阅读：请配合底部 付费功能-付费阅读 功能使用'
+                                        '付费阅读：请配合底部 付费功能-付费阅读 功能使用',
+                                        el(
+                                            'a',
+                                            {
+                                                href: 'https://www.zibll.com/580.html#wznav_3',
+                                                target: 'blank',
+                                            },
+                                            '【查看官网教程】'
+                                        )
                                     ),
                             ],
                             [
@@ -5401,7 +5409,14 @@
                                             '注意：相同密码的块一篇文章只能添加一个，如需同一篇文章添加多个此模块，请设置不同密码'
                                         )
                                     ),
-                            ]
+                            ],
+                            el(
+                                'div',
+                                {
+                                    className: 'opacity8 mb10 em09 mt10 c-yellow',
+                                },
+                                '注意：此模块不能嵌套使用'
+                            ),
                         )
                     )
                 );

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2026-01-30 22:23:36
+ * @LastEditTime : 2026-03-31 22:15:10
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|商城系统|商品功能函数
@@ -133,11 +133,18 @@ function zib_shop_get_product_limit_buy_config($product_id)
     $config['limit']     = $limit;
     $config['is_limit']  = $limit !== -1;
     $config['key_names'] = [
-        'all'   => '普通用户',
-        'auth'  => '认证用户',
-        'vip_1' => _pz('pay_user_vip_1_name', '黄金会员'),
-        'vip_2' => _pz('pay_user_vip_2_name', '钻石会员'),
+        'all' => '普通用户',
     ];
+
+    if (_pz('pay_user_vip_1_s', true)) {
+        $config['key_names']['vip_1'] = _pz('pay_user_vip_1_name', '黄金会员');
+    }
+    if (_pz('pay_user_vip_2_s', true)) {
+        $config['key_names']['vip_2'] = _pz('pay_user_vip_2_name', '钻石会员');
+    }
+    if (_pz('user_auth_s', true)) {
+        $config['key_names']['auth'] = '认证用户';
+    }
 
     if (!$user_id) {
         return $config;
@@ -164,6 +171,7 @@ function zib_shop_get_product_limit_buy_config($product_id)
         $count = zib_shop_get_user_bought_product_count($user_id, $product_id);
         $config['limit'] -= $count;
         $config['bought_count'] = $count;
+        $config['limit']        = $config['limit'] <= 0 ? 0 : $config['limit'];
     }
 
     return $config;
@@ -604,7 +612,7 @@ function zib_shop_get_product_thumbnail($post = null, $class = '', $size = 'medi
     $img_url    = zib_shop_get_product_thumbnail_url($post, $size);
     $_lazy_attr = zib_get_lazy_attr('lazy_posts_thumb', $img_url, $class);
     $alt        = $post->post_title . zib_get_delimiter_blog_name();
-    $img_html   = '<img' . $_lazy_attr . ' src="' . $img_url . '" alt="' . $alt . '">';
+    $img_html   = '<img' . $_lazy_attr . ' alt="' . $alt . '">';
     return $img_html;
 }
 
@@ -728,6 +736,9 @@ function zib_shop_update_product_score($product_id, $new_score_data)
         $is_new = true;
     }
 
+    //先更新总数量
+    $old_count = $score_data['count'];
+    $score_data['count'] += 1;
     foreach ($new_score_data as $key => $value) {
         if (!in_array($key, ['product', 'service', 'shipping', 'average'])) {
             continue;
@@ -736,16 +747,18 @@ function zib_shop_update_product_score($product_id, $new_score_data)
         if ($is_new) {
             $score_data[$key] = (string) $value;
         } else {
-            $score_data[$key] = (string) round(((float) $score_data[$key] + (float) $value) / 2, 2);
+            //旧平均分*旧总数=旧总分+新分的和/新数量
+            $score_data[$key] = zib_floatval_round(((float) $score_data[$key] * $old_count + (float) $value) / $score_data['count']);
         }
     }
-    $score_data['count'] += 1;
 
+    //更新有图数量
     if (!empty($new_score_data['has_image'])) {
         $score_data['counts']['has_image'] += 1;
     }
 
-    if ($score_data['average'] >= 3.5) {
+    //更新好/差评数量
+    if ((float) $new_score_data['average'] >= 3.5) {
         $score_data['counts']['good'] += 1;
     } else {
         $score_data['counts']['bad'] += 1;

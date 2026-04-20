@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:50
- * @LastEditTime : 2025-12-23 21:33:35
+ * @LastEditTime : 2026-03-14 23:27:38
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -452,6 +452,7 @@ function zibpay_get_order_details_modal($order)
         return $html;
     }
 
+    $current_time = current_time('Y-m-d H:i:s');
     $status       = (string) $order['status'];
     $status_name  = zibpay_get_order_status_name($status);
     $header_title = $status_name;
@@ -461,7 +462,7 @@ function zibpay_get_order_details_modal($order)
             $order['status'] = '-1';
             $status          = '-1';
         } else {
-            $time_remaining  = zib_time_to_c($time_remaining);
+            $time_remaining = zib_time_to_c($time_remaining);
             $time_countdown = '<div class="mt6 em09 muted-2-color">剩余<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $time_remaining . '"></span>自动关闭订单</div>';
             $header_title   = '<div class="c-yellow mb6 font-bold">' . zib_get_svg('time') . ' 待支付</div>' . $time_countdown;
         }
@@ -508,17 +509,19 @@ function zibpay_get_order_details_modal($order)
         }
     }
 
-    $_total_price_type_name = $status == '1' ? '实付' : '应付';
-    $_unit_price            = $_mark . '<b>' . $_unit_price . '</b>';
-    $_total_price           = $_mark . '<b>' . $_total_price . '</b>';
-    $shop_s                 = _pz('shop_s');
+    $_total_price_type_name     = $status == '1' ? '实付' : '应付';
+    $_unit_price                = $_mark . '<b>' . $_unit_price . '</b>';
+    $_total_price               = $_mark . '<b>' . $_total_price . '</b>';
+    $shop_s                     = _pz('shop_s');
+    $post_order_expired_option  = false; //订单有效期选项
+    $post_order_expired_is_over = false; //订单有效期是否已过期
 
     if ($post && isset($post->post_title)) {
         $post_type = $post->post_type;
         switch ($post_type) {
             case 'shop_product':
                 if ($shop_s) {
-                    $_img = zib_shop_get_product_thumbnail($post, 'radius8 fit-cover', 'medium');
+                    $_img = zib_shop_get_order_thumb($post, 'radius8 fit-cover', 'medium');
                 }
                 break;
             case 'forum_posts': //论坛帖子
@@ -528,7 +531,8 @@ function zibpay_get_order_details_modal($order)
                 $_img = zib_post_thumbnail('medium', 'radius8 fit-cover', false, $post);
                 break;
         }
-        $_title = '<a href="' . get_the_permalink($post_id) . '" class="text-ellipsis mb6 font-bold">' . $post->post_title . '</a>';
+        $_title                    = '<a href="' . get_the_permalink($post_id) . '" class="text-ellipsis mb6 font-bold">' . zibpay_get_order_title($order, 'font-bold') . '</a>';
+        $post_order_expired_option = zibpay_get_post_order_expired_option($post_id);
     }
 
     $info_html = '';
@@ -546,6 +550,21 @@ function zibpay_get_order_details_modal($order)
         $info_html .= '<div class="flex ac jsb padding-h6"><div class="flex0 mr6 muted-2-color">支付方式</div><div class="flex0">' . zibpay_get_order_pay_detail_lists($order) . '</div></div>';
         $info_html .= '<div class="flex ac jsb padding-h6"><div class="flex0 mr10 muted-2-color">支付单号</div><div class="ml20 overflow-hidden flex ac"><div class="text-ellipsis">' . $order['pay_num'] . '</div><a href="javascript:;" class="flex flex0 ac copy-text icon-spot" data-clipboard-tag="支付单号" data-clipboard-text="' . $order['pay_num'] . '">复制</a></div></div>';
         $info_html .= '<div class="flex ac jsb padding-h6"><div class="flex0 mr6 muted-2-color">支付时间</div><div class="flex0">' . $order['pay_time'] . '</div></div>';
+
+        //订单有效期
+        if ($post_order_expired_option) {
+            //先判断石头已经过期，没有过期显示到期时间，已经过期显示过期时间
+            $post_order_expired_option_time = date('Y-m-d H:i:s', strtotime('+' . $post_order_expired_option['time'] . ' ' . $post_order_expired_option['unit'], strtotime($order['pay_time'])));
+
+            if (strtotime($current_time) > strtotime($post_order_expired_option_time)) {
+                $post_order_expired_is_over = true;
+                $info_html .= '<div class="flex ac jsb padding-h6"><div class="flex0 mr6 muted-2-color">订单有效期</div><div class="flex0 c-yellow" data-toggle="tooltip" title="当前订单已过期，此付费内容需重新购买">' . $post_order_expired_option_time . '已过期</div></div>';
+            } else {
+                $info_html .= '<div class="flex ac jsb padding-h6"><div class="flex0 mr6 muted-2-color">订单有效期</div><div class="flex0" data-toggle="tooltip" title="到期后此付费内容需重新购买">' . $post_order_expired_option_time . '</div></div>';
+            }
+
+        }
+
     }
 
     $info_html = '<div class="info-content">' . $info_html . '</div>';
@@ -574,10 +593,17 @@ function zibpay_get_order_details_modal($order)
             if ($post) {
                 $footer_left = '<a href="' . zib_get_user_home_url($post->post_author) . '" class="but">作者主页</a>';
 
+                if ($status == 1 && !$post_order_expired_is_over) {
+                    $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">去查看</a>';
+                } elseif ($status == -1 || $post_order_expired_is_over) {
+                    $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">重新购买</a>';
+                }
+            }
+            break;
+        case '11':
+            if ($post) {
                 if ($status == 1) {
                     $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">去查看</a>';
-                } elseif ($status == -1) {
-                    $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">重新购买</a>';
                 }
             }
             break;
@@ -585,9 +611,9 @@ function zibpay_get_order_details_modal($order)
         case '2':
             if ($post) {
                 $footer_left = '<a href="' . zib_get_user_home_url($post->post_author) . '" class="but">作者主页</a>';
-                if ($status == 1) {
+                if ($status == 1 && !$post_order_expired_is_over) {
                     $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">去下载</a>';
-                } elseif ($status == -1) {
+                } elseif ($status == -1 || $post_order_expired_is_over) {
                     $footer_right .= '<a href="' . get_permalink($post) . '" class="but c-blue">重新购买</a>';
                 }
             }
@@ -659,19 +685,20 @@ function zibpay_get_user_order_list_card_default($order)
     $post            = $post_id ? get_post($post_id) : null;
 
     //准备参数
-    $_img                   = '';
-    $_title                 = '';
-    $_opt_name              = $order_data['options_active_name'] ?? '';
-    $_unit_price            = '';
-    $_total_price           = '';
-    $_total_price_type_name = '';
-    $_status_name           = '';
-    $_shipping_desc         = '';
-    $_btns                  = '';
-    $order_data             = zibpay::get_meta($order['id'], 'order_data');
-    $_count                 = $order_data['count'] ?? 0;
-    $_time                  = $status >= 1 ? $order['pay_time'] : $order['create_time'];
-    $shop_s                 = _pz('shop_s');
+    $_img                       = '';
+    $_title                     = '';
+    $_opt_name                  = $order_data['options_active_name'] ?? '';
+    $_unit_price                = '';
+    $_total_price               = '';
+    $_total_price_type_name     = '';
+    $_status_name               = '';
+    $_shipping_desc             = '';
+    $_btns                      = '';
+    $order_data                 = zibpay::get_meta($order['id'], 'order_data');
+    $_count                     = $order_data['count'] ?? 0;
+    $_time                      = $status >= 1 ? $order['pay_time'] : $order['create_time'];
+    $shop_s                     = _pz('shop_s');
+    $post_order_expired_is_over = false;
 
     if (isset($order_data['prices']['unit_price'])) {
         $_unit_price = $order_data['prices']['unit_price']; //原价的单价
@@ -697,6 +724,17 @@ function zibpay_get_user_order_list_card_default($order)
         $alt      = $post->post_title . zib_get_delimiter_blog_name();
         $_img     = '<img class="radius8 fit-cover" src="' . $_img_url . '" alt="' . $alt . '">';
         $_title   = '<div class="text-ellipsis mb6 font-bold">' . $post->post_title . '</div>';
+
+        if ($status == '1') {
+            $post_order_expired_option = zibpay_get_post_order_expired_option($post_id);
+            if ($post_order_expired_option) {
+                $post_order_expired_option_time = date('Y-m-d H:i:s', strtotime('+' . $post_order_expired_option['time'] . ' ' . $post_order_expired_option['unit'], strtotime($order['pay_time'])));
+                $current_time                   = current_time('Y-m-d H:i:s');
+                if (strtotime($current_time) > strtotime($post_order_expired_option_time)) {
+                    $post_order_expired_is_over = true;
+                }
+            }
+        }
     } else {
         $_title = $order_data['product_title'] ?? '';
     }
@@ -712,7 +750,7 @@ function zibpay_get_user_order_list_card_default($order)
             $status          = '-1';
             $_status_name    = '<span class="c-red">交易已关闭</span>';
         } else {
-            $time_remaining  = zib_time_to_c($time_remaining);
+            $time_remaining = zib_time_to_c($time_remaining);
             $_status_name   = '<span class="c-red">待支付 <span class="c-yellow px12 badg badg-sm" int-second="1" data-over-text="交易已关闭" data-countdown="' . $time_remaining . '"></span></span>';
         }
     }
@@ -759,19 +797,25 @@ function zibpay_get_user_order_list_card_default($order)
         case '5':
         case '6':
             if ($post) {
-                if ($status == 1) {
+                if ($status == 1 && !$post_order_expired_is_over) {
                     $_btns .= '<a href="' . get_permalink($post) . '" class="but c-blue">去查看</a>';
-                } elseif ($status == -1) {
+                } elseif ($status == -1 || $post_order_expired_is_over) {
                     $_btns .= '<a href="' . get_permalink($post) . '" class="but c-blue">重新购买</a>';
                 }
             }
             break;
-
-        case '2':
+        case '11':
             if ($post) {
                 if ($status == 1) {
+                    $_btns .= '<a href="' . get_permalink($post) . '" class="but c-blue">去查看</a>';
+                }
+            }
+            break;
+        case '2':
+            if ($post) {
+                if ($status == 1 && !$post_order_expired_is_over) {
                     $_btns .= '<a href="' . get_permalink($post) . '" class="but c-blue">去下载</a>';
-                } elseif ($status == -1) {
+                } elseif ($status == -1 || $post_order_expired_is_over) {
                     $_btns .= '<a href="' . get_permalink($post) . '" class="but c-blue">重新购买</a>';
                 }
             }
@@ -924,7 +968,7 @@ function zibpay_get_current_user_post_wait_payment($post_id, $order_type)
         return false;
     }
 
-    if (!in_array((int) $order_type, apply_filters('not_repeat_create_order_type', array(1, 2, 5, 6)))) {
+    if (!in_array((int) $order_type, apply_filters('not_repeat_create_order_type', array(1, 2, 5, 6, 11)))) {
         return false;
     }
 
@@ -1151,7 +1195,7 @@ function zibpay_get_user_wait_pay_float_window()
         $pay_mark     = $is_points ? zibpay_get_points_mark() : zibpay_get_pay_mark();
         $_price       = '<div class="flex shrink0 abl c-red"><span class="pay-mark px12">' . $pay_mark . '</span>' . zib_floatval_round($order['pay_price']) . '</div>';
 
-        $time_remaining  = zib_time_to_c($time_remaining);
+        $time_remaining = zib_time_to_c($time_remaining);
         $countdown_html = '<span class="c-yellow px12 countdown-box" int-second="1" data-countdown="' . $time_remaining . '" data-over-text="交易已关闭"></span>';
         $lists .= '
             <div class="flex list-mt10 order-item" data-class="modal-mini full-sm" mobile-bottom="true" data-height="330" data-toggle="RefreshModal" data-action="order_pay_modal&payment_id=' . $order['payment_id'] . '">

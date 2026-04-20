@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-10-09 22:46:56
- * @LastEditTime : 2025-07-25 15:20:20
+ * @LastEditTime : 2026-03-14 16:08:36
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|用户中心页面的相关函数
@@ -199,34 +199,41 @@ function zib_user_center_page_sidebar_statistics($con)
         return $con;
     }
 
-    $args = array(
-        array(
+    $args = array();
+
+    $author_tab_args = zib_get_author_main_tab_args($user_id);
+
+    if (isset($author_tab_args['post'])) {
+        $args[] = array(
             'name'  => '文章',
             'count' => zib_get_user_post_count($user_id, 'publish'),
             'link'  => zib_get_user_home_url($user_id, array('tab' => 'post')),
-        ),
-        array(
-            'name'  => '评论',
-            'count' => get_user_comment_count($user_id),
-            'link'  => zib_get_user_home_url($user_id, array('tab' => 'comment')),
-        ),
-        array(
-            'name'  => '收藏',
-            'count' => zib_get_user_favorite_count($user_id),
-            'link'  => zib_get_user_home_url($user_id, array('tab' => 'favorite')),
-        ),
-        array(
-            'name'  => '粉丝',
-            'count' => get_user_followed_count($user_id),
-            'link'  => zib_get_user_home_url($user_id, array('tab' => 'follow')),
-        ),
+        );
+    }
+
+    $args[] = array(
+        'name'  => '评论',
+        'count' => get_user_comment_count($user_id),
+        'link'  => isset($author_tab_args['comment']) ? zib_get_user_home_url($user_id, array('tab' => 'comment')) : '',
+    );
+
+    $args[] = array(
+        'name'  => '收藏',
+        'count' => zib_get_user_favorite_count($user_id),
+        'link'  => isset($author_tab_args['favorite']) ? zib_get_user_home_url($user_id, array('tab' => 'favorite')) : '',
+    );
+
+    $args[] = array(
+        'name'  => '粉丝',
+        'count' => get_user_followed_count($user_id),
+        'link'  => isset($author_tab_args['follow']) ? zib_get_user_home_url($user_id, array('tab' => 'follow')) : '',
     );
 
     $args = apply_filters('user_sidebar_statistics_args', $args, $user_id);
     $item = '';
 
     foreach ($args as $arg) {
-        $item .= '<a class="user-statistics-item" href="' . $arg['link'] . '"><div class="em14">' . _cut_count($arg['count']) . '</div><div class="em09 opacity5 mt6">' . $arg['name'] . '</div></a>';
+        $item .= '<a class="user-statistics-item" href="' . ($arg['link'] ? $arg['link'] : 'javascript:;') . '"><div class="em14">' . _cut_count($arg['count']) . '</div><div class="em09 opacity5 mt6">' . $arg['name'] . '</div></a>';
     }
 
     $con .= '<div class="mb10-sm mb20 flex ac jsa zib-widget padding-10 text-center">' . $item . '</div>';

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-23 16:56:31
+ * @LastEditTime : 2026-03-30 12:03:23
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|后台功能配置
@@ -27,7 +27,7 @@ function zib_bbs_csf_admin_options()
 
     CSF::createSection($prefix, array(
         'parent'      => 'forum',
-        'title'       => '全局设置'.$new_badge['8.5'],
+        'title'       => '全局设置' . $new_badge['8.5'],
         'icon'        => 'fa fa-fw fa-forumbee',
         'description' => '',
         'fields'      => array(
@@ -476,12 +476,20 @@ function zib_bbs_csf_admin_options()
                 'class'   => 'compact mini-input',
                 'type'    => 'text',
             ),
+            array(
+                'title'   => '板块关注名称' . $new_badge['8.7'],
+                'id'      => 'bbs_plate_follow_name',
+                'desc'    => '板块关注的名称，例如：关注、加入、入驻、订阅等',
+                'default' => '关注',
+                'class'   => 'compact mini-input',
+                'type'    => 'text',
+            ),
         ),
     ));
 
     CSF::createSection($prefix, array(
         'parent'      => 'forum',
-        'title'       => '首页设置',
+        'title'       => '首页设置' . $new_badge['8.7'],
         'icon'        => 'fa fa-fw fa-home',
         'description' => '',
         'fields'      => array(
@@ -1322,19 +1330,36 @@ function zib_bbs_csf_admin_options()
                 ),
             ),
             array(
-                'title'    => '首页栏目默认显示',
-                'desc'     => '打开首页时，默认显示第几个栏目TAB',
-                'id'       => 'bbs_home_tab_active_index',
-                'default'  => 2,
-                'type'     => 'spinner',
-                'step'     => 1,
+                'title'   => '首页栏目默认显示',
+                'desc'    => '打开首页时，默认显示第几个栏目TAB',
+                'id'      => 'bbs_home_tab_active_index',
+                'default' => 2,
+                'type'    => 'spinner',
+                'step'    => 1,
             ),
             array(
-                'title'    => '栏目TAB移动端滑动切换',
-                'desc'     => '开启后，移动端可以左右滑动切换栏目，对浏览器性能有一定要求，性能太差的手机会出现卡顿现象',
-                'id'       => 'bbs_home_tab_swiper',
+                'title'    => '快速发布' . $new_badge['8.7'],
+                'label'    => '显示快速发布帖子模块（没有发帖权限的用户不会显示）',
+                'id'       => 'bbs_home_tab_quick_posts_s',
                 'default'  => true,
                 'type'     => 'switcher',
+            ),
+            array(
+                'dependency' => array('bbs_home_tab_quick_posts_s', '!=', ''),
+                'title'      => ' ',
+                'subtitle'   => '显示在第几个栏目TAB',
+                'id'         => 'bbs_home_tab_quick_posts_tab',
+                'class'      => 'compact',
+                'default'    => 2,
+                'type'       => 'spinner',
+                'step'       => 1,
+            ),
+            array(
+                'title'   => '栏目TAB移动端滑动切换',
+                'desc'    => '开启后，移动端可以左右滑动切换栏目，对浏览器性能有一定要求，性能太差的手机会出现卡顿现象',
+                'id'      => 'bbs_home_tab_swiper',
+                'default' => true,
+                'type'    => 'switcher',
             ),
         ),
     ));
@@ -1410,19 +1435,19 @@ function zib_bbs_csf_admin_options()
                 'fields'       => BBS_CFS_Module::plate_tab(),
             ),
             array(
-                'title'    => '版块默认显示栏目',
-                'desc'     => '打开板块页面时，默认显示第几个栏目TAB',
-                'id'       => 'bbs_plate_tab_active_index',
-                'default'  => 2,
-                'type'     => 'spinner',
-                'step'     => 1,
+                'title'   => '版块默认显示栏目',
+                'desc'    => '打开板块页面时，默认显示第几个栏目TAB',
+                'id'      => 'bbs_plate_tab_active_index',
+                'default' => 2,
+                'type'    => 'spinner',
+                'step'    => 1,
             ),
             array(
-                'title'    => '栏目TAB移动端滑动切换',
-                'desc'     => '开启后，移动端可以左右滑动切换栏目，对浏览器性能有一定要求，性能太差的手机会出现卡顿现象',
-                'id'       => 'bbs_plate_tab_swiper',
-                'default'  => true,
-                'type'     => 'switcher',
+                'title'   => '栏目TAB移动端滑动切换',
+                'desc'    => '开启后，移动端可以左右滑动切换栏目，对浏览器性能有一定要求，性能太差的手机会出现卡顿现象',
+                'id'      => 'bbs_plate_tab_swiper',
+                'default' => true,
+                'type'    => 'switcher',
             ),
         ),
     ));
@@ -1727,7 +1752,7 @@ function zib_bbs_csf_admin_options()
             'fields'      => array(
                 array(
                     'content' => '<div>在此处添加一些[限制发帖]的选项，添加之后可以在版块设置中进行选择，即可实现不同版块不同的发帖限制功能</div>
-                <div>先设置一个需要的选项数量，刷新页面后再设置每个选项的权限规则以及名称定义</div>
+                <div>先设置一个需要的选项数量，刷新页面后再设置每个选项的权限规则以及名称定义 | <a href="https://www.zibll.com/3173.html" target="_blank">查看官网教程</a></div>
                 <div class="c-yellow"><i class="fa fa-fw fa-info-circle fa-fw"></i>修改数量后，请先刷新页面后再做其它配置</div>
                 ',
                     'title'   => '限制[发帖]',
@@ -1757,7 +1782,7 @@ function zib_bbs_csf_admin_options()
                 ),
                 array(
                     'content' => '<div>在此处添加一些[限制创建版块]的选项，添加之后可以在版块分类设置中进行选择，即可实现不同版块分类不同的创建版块限制功能</div>
-                <div>先设置一个需要的选项数量，刷新页面后再设置每个选项的权限规则以及名称定义</div>
+                <div>先设置一个需要的选项数量，刷新页面后再设置每个选项的权限规则以及名称定义 | <a href="https://www.zibll.com/3173.html" target="_blank">查看官网教程</a></div>
                 <div class="c-yellow"><i class="fa fa-fw fa-info-circle fa-fw"></i>修改数量后，请先刷新页面后再做其它配置</div>
                 ',
                     'title'   => '限制[创建版块]',
@@ -1810,14 +1835,14 @@ function zib_bbs_csf_admin_options()
                     'help'    => '关闭后只会对有权限的用户显示，开启后如果用户没有权限，点击按钮会提示权限不足',
                 ),
                 array(
-                    'title'   => __('发帖付费内容允许设置隐藏模式', 'zib_language'),
+                    'title'   => __('帖子付费内容允许设置隐藏模式', 'zib_language'),
                     'id'      => 'bbs_post_pay_hide_type_s',
                     'default' => true,
                     'type'    => 'switcher',
                     'desc'    => '开启此项，用户可以选择隐藏全文或者隐藏部分内容<br/>关闭此项，则默认为隐藏全文',
                 ),
                 array(
-                    'title'   => __('发帖付费内容允许设置会员价', 'zib_language'),
+                    'title'   => __('帖子付费内容允许设置会员价', 'zib_language'),
                     'id'      => 'bbs_post_pay_vip_price_s',
                     'default' => true,
                     'type'    => 'switcher',
@@ -1846,7 +1871,7 @@ function zib_bbs_csf_admin_options()
                     'class'      => 'compact',
                 ),
                 array(
-                    'title'  => '付费内容金额限制' . $new_badge['8.1'],
+                    'title'  => '帖子付费内容金额限制' . $new_badge['8.1'],
                     'desc'   => '限制用户允许设置的金额，防止金额过高不合理(填0为不限制)',
                     'id'     => 'bbs_post_pay_price_limit',
                     'type'   => 'fieldset',
@@ -1873,6 +1898,72 @@ function zib_bbs_csf_admin_options()
                         ),
                     ),
                 ),
+
+                array(
+                    'title'  => '板块【付费关注】配置' . $new_badge['8.7'],
+                    'id'     => 'bbs_plate_follow_pay_opt',
+                    'type'   => 'fieldset',
+                    'fields' => array(
+                        array(
+                            'title'   => __('允许设置会员价', 'zib_language'),
+                            'id'      => 'vip_price_s',
+                            'default' => true,
+                            'type'    => 'switcher',
+                            'desc'    => '开启此项，则允许设置板块付费关注的会员价格<br/>关闭此项，则只能设置普通价格，会员价则按照下方设置的折扣自动计算',
+                        ),
+                        array(
+                            'dependency' => array('vip_price_s', '==', ''),
+                            'id'         => 'vip_1_discount', //折扣
+                            'title'      => ' ',
+                            'subtitle'   => _pz('pay_user_vip_1_name') . '折扣',
+                            'default'    => 100,
+                            'type'       => 'number',
+                            'unit'       => '%',
+                            'class'      => 'compact',
+                        ),
+                        array(
+                            'dependency' => array('vip_price_s', '==', ''),
+                            'id'         => 'vip_2_discount', //折扣
+                            'class'      => 'compact',
+                            'title'      => ' ',
+                            'subtitle'   => _pz('pay_user_vip_2_name') . '折扣',
+                            'desc'       => '普通价格的百分之多少，0为免费，100为没有折扣，不能高于100',
+                            'default'    => 100,
+                            'type'       => 'number',
+                            'unit'       => '%',
+                            'class'      => 'compact',
+                        ),
+                        array(
+                            'title'  => '金额设置限制',
+                            'desc'   => '限制允许设置的金额，防止金额过高不合理(填0为不限制)',
+                            'id'     => 'price_limit',
+                            'type'   => 'fieldset',
+                            'fields' => array(
+                                array(
+                                    'title'   => '现金金额限制',
+                                    'id'      => 'price',
+                                    'type'    => 'between_number',
+                                    'unit'    => '',
+                                    'default' => array(
+                                        'min' => 0,
+                                        'max' => 999,
+                                    ),
+                                ),
+                                array(
+                                    'title'   => '积分金额限制',
+                                    'id'      => 'points',
+                                    'type'    => 'between_number',
+                                    'unit'    => '',
+                                    'default' => array(
+                                        'min' => 0,
+                                        'max' => 0,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+
             ),
         )
     );
@@ -2721,7 +2812,7 @@ class BBS_CFS_Module
             ),
             array(
                 'id'            => 'bbs_' . 'plate_set_add_limit',
-                'name'          => '为自己的创建的版块设置发帖权限',
+                'name'          => '为自己的创建的版块设置[发帖权限]',
                 'exclude_roles' => array('all'),
                 'default'       => array(
                     'logged' => true,
@@ -2729,11 +2820,16 @@ class BBS_CFS_Module
             ),
             array(
                 'id'            => 'bbs_' . 'plate_set_allow_view',
-                'name'          => '为自己的创建的版块设置查看权限',
+                'name'          => '为自己的创建的版块设置[查看权限]',
                 'exclude_roles' => array('all'),
                 'default'       => array(
                     'logged' => true,
                 ),
+            ),
+            array(
+                'id'            => 'bbs_' . 'plate_set_follow_pay',
+                'name'          => '为自己的创建的版块设置[收费关注]' . $new_badge['8.7'],
+                'exclude_roles' => array('all'),
             ),
             array(
                 'id'            => 'bbs_' . 'plate_plate_cat_edit',
@@ -2770,6 +2866,14 @@ class BBS_CFS_Module
                 'default' => array(
                     'moderator'     => true,
                     'plate_author'  => true,
+                    'cat_moderator' => true,
+                ),
+            ),
+            array(
+                'id'      => 'bbs_' . 'plate_set_follow_pay_other',
+                'name'    => '为自己管理的版块设置[收费关注]' . $new_badge['8.7'],
+                'roles'   => array('moderator', 'plate_author', 'cat_moderator'),
+                'default' => array(
                     'cat_moderator' => true,
                 ),
             ),

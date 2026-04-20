@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:50
- * @LastEditTime : 2026-01-11 16:41:27
+ * @LastEditTime : 2026-03-14 23:35:53
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -270,6 +270,7 @@ class ZibPay
      */
     public static function get_row($where)
     {
+
         $data = self::order_data_map(ZibDB::name(self::$order_table_name)->where($where)->find()->toArray());
 
         return $data;

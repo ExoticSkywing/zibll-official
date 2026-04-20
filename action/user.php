@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 15:18:45
- * @LastEditTime : 2026-01-29 15:28:24
+ * @LastEditTime : 2026-03-11 12:25:35
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -148,41 +148,17 @@ function zib_ajax_user_edit_datas()
     }
 
     if ($_POST['desc']) {
-        update_user_meta($cuid, 'description', trim($_POST['desc']));
+        update_user_meta($cuid, 'description', trim(strip_tags($_POST['desc'])));
     }
 
-    if ($_POST['qq']) {
-        zib_update_user_meta($cuid, 'qq', trim($_POST['qq']));
-    }
-
-    if ($_POST['weixin']) {
-        zib_update_user_meta($cuid, 'weixin', trim($_POST['weixin']));
-    }
-
-    if ($_POST['weibo']) {
-        zib_update_user_meta($cuid, 'weibo', trim($_POST['weibo']));
-    }
-
-    if ($_POST['github']) {
-        zib_update_user_meta($cuid, 'github', trim($_POST['github']));
-    }
-
-    if ($_POST['url_name']) {
-        zib_update_user_meta($cuid, 'url_name', trim($_POST['url_name']));
-    }
-
-    if ($_POST['gender']) {
-        //性别
-        update_user_meta($cuid, 'gender', trim($_POST['gender']));
-    }
-
-    if ($_POST['address']) {
-        zib_update_user_meta($cuid, 'address', trim($_POST['address']));
-    }
-
-    if ($_POST['privacy']) {
-        zib_update_user_meta($cuid, 'privacy', trim($_POST['privacy']));
-    }
+    zib_update_user_meta($cuid, 'qq', trim(strip_tags($_POST['qq'])));
+    zib_update_user_meta($cuid, 'weixin', trim(strip_tags($_POST['weixin'])));
+    zib_update_user_meta($cuid, 'weibo', trim(strip_tags($_POST['weibo'])));
+    zib_update_user_meta($cuid, 'github', trim(strip_tags($_POST['github'])));
+    zib_update_user_meta($cuid, 'url_name', trim(strip_tags($_POST['url_name'])));
+    zib_update_user_meta($cuid, 'address', trim(strip_tags($_POST['address'])));
+    zib_update_user_meta($cuid, 'privacy', trim(strip_tags($_POST['privacy'])));
+    update_user_meta($cuid, 'gender', trim(strip_tags($_POST['gender'])));
 
     $datas = array('ID' => $cuid);
     if ($_POST['url']) {

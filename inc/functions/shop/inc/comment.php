@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-12-23 22:31:32
- * @LastEditTime: 2025-10-06 20:10:29
+ * @LastEditTime : 2026-03-31 22:24:27
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题 | 商品评论
@@ -295,26 +295,25 @@ function zib_shop_comments_template_query_args($comment_args)
 add_filter('comments_template_query_args', 'zib_shop_comments_template_query_args');
 
 //当删除评论或改变评论状态时候，更新商品的对应评论数据量
-function zib_shop_update_product_score_counts($comment_id)
+function zib_shop_update_product_score_counts($new_status, $old_status, $comment)
 {
-    $comment = get_comment($comment_id);
 
-    if (empty($comment->comment_post_ID)) {
+    if (empty($comment->comment_post_ID) || $new_status === $old_status) {
         return;
     }
 
-    $post_id   = $comment->comment_post_ID;
-    $post_type = get_post_type($post_id);
+    $post_id    = $comment->comment_post_ID;
+    $comment_id = $comment->comment_ID;
+    $post_type  = get_post_type($post_id);
     if ($post_type !== 'shop_product') {
         return;
     }
 
-    //删除评价数量缓存
-    wp_cache_delete($post_id, 'shop_comment_count');
-
-    $score_data = zib_get_post_meta($post_id, 'score_data', true);
-    if (!$score_data) {
-        $score_data = array(
+    $comment_score_data = zib_get_comment_meta($comment_id, 'score_data', true);
+    $comment_score      = (float) get_comment_meta($comment_id, 'score', true);
+    $post_score_data    = zib_get_post_meta($post_id, 'score_data', true);
+    if (!$post_score_data) {
+        $post_score_data = array(
             'average'  => 5,
             'product'  => 5,
             'service'  => 5,
@@ -328,47 +327,102 @@ function zib_shop_update_product_score_counts($comment_id)
         );
     }
 
-    $args = [
-        'post_id' => $post_id,
-        'status'  => 'approve',
-        'count'   => true,
-    ];
+    $old_count = $post_score_data['count'];
+    if ($new_status === 'approved') {
+        //增加评论
 
-    //获取好评评论数量
-    $args['meta_query'] = [
-        [
-            'key'     => 'score',
-            'value'   => 3.5,
-            'compare' => '>='],
-    ];
-    $count                        = get_comments($args);
-    $score_data['counts']['good'] = $count;
+        //增加好评数量
+        if ($comment_score >= 3.5) {
+            $post_score_data['counts']['good'] += 1;
+        } else {
+            $post_score_data['counts']['bad'] += 1;
+        }
 
-    //获取差评评论数量
-    $args['meta_query'] = [
-        [
-            'key'     => 'score',
-            'value'   => 3.5,
-            'compare' => '<'],
-    ];
-    $count                       = get_comments($args);
-    $score_data['counts']['bad'] = $count;
+        //增加有图数量
+        if ($comment_score_data['has_image']) {
+            $post_score_data['counts']['has_image'] += 1;
+        }
 
-    //获取有图的评论数量
-    $args['meta_query'] = [
-        [
-            'key'     => 'shop_has_image',
-            'value'   => 1,
-            'compare' => '=',
-        ],
-    ];
-    $count                             = get_comments($args);
-    $score_data['counts']['has_image'] = $count;
+        //增加评价总次数
+        $post_score_data['count'] += 1;
+
+        //增加平均评分
+        foreach ($comment_score_data as $key => $value) {
+            if (!in_array($key, ['product', 'service', 'shipping', 'average'])) {
+                continue;
+            }
+            //先分别增加评分
+            $_old_sum = (float) $post_score_data[$key] * $old_count;
+            $_new_val = zib_floatval_round(($_old_sum + $value) / $post_score_data['count']);
+
+            $post_score_data[$key] = $_new_val;
+        }
+
+    } else {
+        //删除评论
+
+        //移出数量
+        if ($comment_score >= 3.5) {
+            $post_score_data['counts']['good'] -= 1;
+        } else {
+            $post_score_data['counts']['bad'] -= 1;
+        }
+
+        //移出有图数量
+        if ($comment_score_data['has_image']) {
+            $post_score_data['counts']['has_image'] -= 1;
+        }
+
+        //减少评价总次数
+        $post_score_data['count'] -= 1;
+        $post_score_data['count'] = $post_score_data['count'] <= 0 ? 0 : $post_score_data['count'];
+
+        //减少平均评分
+        foreach ($comment_score_data as $key => $value) {
+            if (!in_array($key, ['product', 'service', 'shipping', 'average'])) {
+                continue;
+            }
+            //先分别增加评分
+            //之前为4.6分，删除一个2分，平均分应该增加
+            //计算方式应该为：之前分数*之前数量=之前总分，（之前总分-当前分数）/现在数量
+            if ($post_score_data['count'] > 0) {
+                $_old_sum = (float) $post_score_data[$key] * $old_count;
+                $_new_val = zib_floatval_round(($_old_sum - $value) / $post_score_data['count']);
+
+                $post_score_data[$key] = $_new_val;
+            } else {
+                $post_score_data[$key] = 5;
+            }
+        }
+    }
+
+    //做兼容处理，分数不能高于5，数量不能低于1
+    foreach ($post_score_data as $key => $value) {
+        if (!in_array($key, ['product', 'service', 'shipping', 'average'])) {
+            continue;
+        }
+        if ((float) $value > 5) {
+            $post_score_data[$key] = 5;
+        }
+    }
+    foreach ($post_score_data['counts'] as $key => $value) {
+        if ((int) $value < 0) {
+            $post_score_data['counts'][$key] = 0;
+        }
+    }
+
+    //删除评价数量缓存
+    wp_cache_delete($post_id, 'shop_comment_count');
+
+    //如果没有评论了，恢复初始值
+    if ($post_score_data['count'] == 0) {
+        $post_score_data = false;
+    }
 
     //更新评分数据
-    zib_update_post_meta($post_id, 'score_data', $score_data);
+    zib_update_post_meta($post_id, 'score_data', $post_score_data);
 }
-add_action('wp_set_comment_status', 'zib_shop_update_product_score_counts');
+add_action('transition_comment_status', 'zib_shop_update_product_score_counts', 10, 3);
 
 function zib_shop_get_comment_link($link, $comment)
 {

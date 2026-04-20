@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-11-28 14:30:45
+ * @LastEditTime : 2026-03-14 16:23:30
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|用户类函数
@@ -521,7 +521,7 @@ function zib_bbs_user_can($user_id, $capability, ...$args)
                 }
             }
 
-            $add_limit = (int) get_post_meta($args[0], 'add_limit', true);
+            $add_limit = get_post_meta($args[0], 'add_limit', true);
             if ($add_limit) {
                 $_roles = zib_bbs_get_cap_roles('posts_add_limit_' . $add_limit);
                 return zib_is_can_roles($user_id, $_roles);
@@ -545,7 +545,7 @@ function zib_bbs_user_can($user_id, $capability, ...$args)
                 }
             }
 
-            $add_limit = (int) get_term_meta($args[0], 'add_limit', true);
+            $add_limit = get_term_meta($args[0], 'add_limit', true);
             if ($add_limit) {
                 $_roles = zib_bbs_get_cap_roles('plate_add_limit_' . $add_limit);
                 return zib_is_can_roles($user_id, $_roles);
@@ -667,7 +667,6 @@ function zib_bbs_user_can($user_id, $capability, ...$args)
                 } else {
 
                     //编辑版块
-
                     //版主判断
                     if (!empty($_roles['moderator']) && zib_bbs_is_the_moderator($post, $user_id)) {
                         return true;
@@ -711,6 +710,7 @@ function zib_bbs_user_can($user_id, $capability, ...$args)
         case 'posts_allow_view_points': //支付积分阅读
         case 'plate_set_allow_view': //修改设置阅读权限
         case 'plate_set_add_limit': //版块设置发贴限制
+        case 'plate_set_follow_pay': //版块设置收费关注
 
             //区分新建和修改编辑
             //新建或者自己就是作者编辑自己的 :zib_is_can_roles
@@ -776,6 +776,7 @@ function zib_bbs_user_can($user_id, $capability, ...$args)
         case 'posts_delete_other'; //删除其它人的帖子
         case 'plate_set_add_limit_other'; //为自己管理的版块设置[发帖限制]
         case 'plate_set_allow_view_other'; //为自己管理的版块设置[查看权限]
+        case 'plate_set_follow_pay_other'; //为自己管理的版块设置[收费关注]
         case 'posts_allow_view_points_other'; //为自己管理的版块设置[积分支付查看]
         case 'posts_allow_view_pay_other'; //为自己管理的版块设置[付费查看]
         case 'moderator_add': //添加版主

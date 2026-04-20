@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2022-03-30 12:52:47
- * @LastEditTime : 2026-01-29 15:53:48
+ * @LastEditTime : 2026-03-14 23:15:21
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -261,7 +261,12 @@ function zibpay_get_pay_type_name($pay_type = null, $show_icon = false)
         '8'  => '余额充值', //用户
         '9'  => '购买积分', //用户
         '10' => '购买商品', //商城，商品
+        '11' => '关注版块', //版块
     );
+
+    if (!empty($GLOBALS['zib_bbs']->plate_name)) {
+        $name['11'] = $GLOBALS['zib_bbs']->plate_follow_name . $GLOBALS['zib_bbs']->plate_name;
+    }
 
     if (!$pay_type) {
         return $name;
@@ -335,9 +340,15 @@ function zibpay_get_post_thumbnail_url($post = null)
 //获取订单的商品图片
 function zibpay_get_order_order_thumb($order, $class = '')
 {
-    $order = (array) $order;
-    $_img  = '';
-    if (!empty($order['post_id'])) {
+    $order         = (array) $order;
+    $_img          = '';
+    $product_image = zibpay::get_meta($order['id'], 'order_data.product_image');
+
+    if ($product_image) {
+        $_img = '<img class="radius8 fit-cover" src="' . $product_image . '" alt="product-image">';
+    }
+
+    if (!$_img && !empty($order['post_id'])) {
         $post = get_post($order['post_id']);
         if ($post && isset($post->post_title)) {
             $_img_url = zibpay_get_post_thumbnail_url($post);
@@ -351,7 +362,7 @@ function zibpay_get_order_order_thumb($order, $class = '')
     if (!$_img && !empty($order['order_type'])) {
         switch ($order['order_type']) {
             case '4':
-                $_img = '<img src="' . zibpay_get_vip_icon_img_url(1) . '" class="radius8 fit-cover vip-card">';
+                $_img = '<img src="' . zibpay_get_vip_icon_img_url(1) . '" class="radius8 fit-cover vip-card" alt="product-image">';
                 break;
             case '8':
                 $_img = zib_get_svg('money-color-2', null, 'muted-box fit-cover c-blue-2');
@@ -383,6 +394,7 @@ function zibpay_get_order_title($order, $class = '')
         $_title = zibpay_get_pay_type_name($order['order_type']);
     }
 
+    $_title = apply_filters('zibpay_order_title', $_title, $order);
     return '<div class="order-title ' . $class . '">' . $_title . '</div>';
 }
 
@@ -759,7 +771,36 @@ function zibpay_is_paid($post_id, $user_id = 0)
 
     $posts_pay = get_post_meta($post_id, 'posts_zibpay', true);
 
-    //文章参数判断
+    //1.已经支付判断
+    $order_expired_option = zibpay_get_post_order_expired_option($post_id);
+    if ($user_id) {
+        // 如果已经登录，根据用户id查找数据库订单
+        $pay_order[$post_id][$user_id] = zibpay_get_post_paid_data_by_user($post_id, $user_id, $order_expired_option);
+
+        if ($pay_order[$post_id][$user_id]) {
+            $pay_order[$post_id][$user_id]['paid_type'] = 'paid';
+            if ($order_expired_option) {
+                //计算到期时间
+                $pay_order[$post_id][$user_id]['order_expired_time'] = date('Y-m-d H:i:s', strtotime('+' . $order_expired_option['time'] . ' ' . $order_expired_option['unit'], strtotime($pay_order[$post_id][$user_id]['pay_time'])));
+            }
+            return $pay_order[$post_id][$user_id];
+        }
+    }
+
+    //未登录，根据浏览器Cookie查找
+    if (isset($_COOKIE['zibpay_' . $post_id])) {
+        $pay_order[$post_id][$user_id] = zibpay_get_post_paid_data_by_order_num($post_id, $_COOKIE['zibpay_' . $post_id], $order_expired_option);
+        if ($pay_order[$post_id][$user_id]) {
+            $pay_order[$post_id][$user_id]['paid_type'] = 'paid';
+            if ($order_expired_option) {
+                //计算到期时间
+                $pay_order[$post_id][$user_id]['order_expired_time'] = date('Y-m-d H:i:s', strtotime('+' . $order_expired_option['time'] . ' ' . $order_expired_option['unit'], strtotime($pay_order[$post_id][$user_id]['pay_time'])));
+            }
+            return $pay_order[$post_id][$user_id];
+        }
+    }
+
+    //2.免费判断：包含免费和会员免费
     if (zibpay_post_is_points_modo($posts_pay)) {
         //积分商品
         $points_price = !empty($posts_pay['points_price']) ? (int) $posts_pay['points_price'] : 0;
@@ -773,10 +814,7 @@ function zibpay_is_paid($post_id, $user_id = 0)
             $pay_order[$post_id][$user_id] = array('paid_type' => 'vip' . $vip_level . '_free', 'vip_level' => $vip_level, 'modo' => 'points');
             return $pay_order[$post_id][$user_id];
         }
-
     } else {
-        //待处理，免费下载额度用完之后，再购买
-
         $pay_price = !empty($posts_pay['pay_price']) ? round((float) $posts_pay['pay_price'], 2) : 0;
         if ($pay_price <= 0) {
             $pay_order[$post_id][$user_id] = array('paid_type' => 'free');
@@ -791,30 +829,38 @@ function zibpay_is_paid($post_id, $user_id = 0)
         }
     }
 
-    if ($user_id) {
-        // 如果已经登录，根据用户id查找数据库订单
-        $pay_order[$post_id][$user_id] = zibpay_get_post_paid_data_by_user($post_id, $user_id);
-
-        if ($pay_order[$post_id][$user_id]) {
-            $pay_order[$post_id][$user_id]['paid_type'] = 'paid';
-            return $pay_order[$post_id][$user_id];
-        }
-    }
-
-    //根据浏览器Cookie查找
-    if (isset($_COOKIE['zibpay_' . $post_id])) {
-        $pay_order[$post_id][$user_id] = zibpay_get_post_paid_data_by_order_num($post_id, $_COOKIE['zibpay_' . $post_id]);
-        if ($pay_order[$post_id][$user_id]) {
-            $pay_order[$post_id][$user_id]['paid_type'] = 'paid';
-            return $pay_order[$post_id][$user_id];
-        }
-    }
-
     $pay_order[$post_id][$user_id] = false;
     return $pay_order[$post_id][$user_id];
 }
 
-function zibpay_get_post_paid_data_by_user($post_id, $user_id = 0)
+function zibpay_get_post_order_expired_option($post_id)
+{
+    if (!$post_id) {
+        return false;
+    }
+
+    $posts_pay = get_post_meta($post_id, 'posts_zibpay', true);
+    if (!$posts_pay) {
+        return false;
+    }
+
+    if (empty($posts_pay['pay_type']) || 'no' === $posts_pay['pay_type'] || empty($posts_pay['order_expired_s']) || empty($posts_pay['order_expired_opt']['time']) || empty($posts_pay['order_expired_opt']['unit'])) {
+        return false;
+    }
+
+    $time = (int) $posts_pay['order_expired_opt']['time'];
+
+    if ($time <= 0) {
+        return false;
+    }
+
+    return array(
+        'time' => $time,
+        'unit' => $posts_pay['order_expired_opt']['unit'],
+    );
+}
+
+function zibpay_get_post_paid_data_by_user($post_id, $user_id = 0, $order_expired_option = false)
 {
     if (!$post_id || !$user_id) {
         return false;
@@ -825,11 +871,20 @@ function zibpay_get_post_paid_data_by_user($post_id, $user_id = 0)
         'user_id' => $user_id,
         'status'  => 1,
     ];
-    $pay_order = zibpay::get_row($where);
+
+    $DB = ZibDB::name(zibpay::$order_table_name);
+    $DB->where($where)->order('id', 'DESC');
+    if ($order_expired_option) {
+        $current_time = current_time('Y-m-d H:i:s');
+        $DB->where('pay_time', '>=', date('Y-m-d H:i:s', strtotime('-' . $order_expired_option['time'] . ' ' . $order_expired_option['unit'], strtotime($current_time))));
+    }
+
+    $pay_order = zibpay::order_data_map($DB->find()->toArray());
+
     return $pay_order;
 }
 
-function zibpay_get_post_paid_data_by_order_num($post_id, $order_num)
+function zibpay_get_post_paid_data_by_order_num($post_id, $order_num, $order_expired_option = false)
 {
     if (!$post_id || !$order_num) {
         return false;
@@ -840,7 +895,16 @@ function zibpay_get_post_paid_data_by_order_num($post_id, $order_num)
         'order_num' => $order_num,
         'status'    => 1,
     ];
-    $pay_order = zibpay::get_row($where);
+
+    $DB = ZibDB::name(zibpay::$order_table_name);
+    $DB->where($where)->order('id', 'DESC');
+    if ($order_expired_option) {
+        $current_time = current_time('Y-m-d H:i:s');
+        $DB->where('pay_time', '>=', date('Y-m-d H:i:s', strtotime('-' . $order_expired_option['time'] . ' ' . $order_expired_option['unit'], strtotime($current_time))));
+    }
+
+    $pay_order = zibpay::order_data_map($DB->find()->toArray());
+
     return $pay_order;
 }
 

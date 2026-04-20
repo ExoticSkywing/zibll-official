@@ -3,7 +3,7 @@
  * @Author       : Qinver
  * @Url          : zibll.com
  * @Date         : 2025-07-12 21:42:08
- * @LastEditTime : 2025-12-26 20:39:14
+ * @LastEditTime : 2026-03-14 23:02:52
  * @Project      : Zibll子比主题
  * @Description  : 更优雅的Wordpress主题
  * Copyright (c) 2025 by Qinver, All Rights Reserved.
@@ -314,6 +314,13 @@ function zibpay_ajax_submit_order()
                 }
             }
 
+            if ($order_type == 2) {
+                $price_type = !empty($_REQUEST['price_type']) ? $_REQUEST['price_type'] : '';
+                if ($price_type == 'download_limit_over') {
+                    $__data['order_price'] = !empty($pay_mate['download_limit_over_price']) ? round((float) $pay_mate['download_limit_over_price'], 2) : 0;
+                }
+            }
+
             $__mate_order_data['product_id']    = $post->ID;
             $__mate_order_data['product_title'] = $post->post_title;
 
@@ -324,6 +331,11 @@ function zibpay_ajax_submit_order()
             if (isset($__data['mate_order_data'])) {
                 $__mate_order_data = array_merge($__mate_order_data, $__data['mate_order_data']);
                 unset($__data['mate_order_data']);
+            }
+
+            if (isset($__data['payment_method'])) {
+                $payment_method = $__data['payment_method'];
+                unset($__data['payment_method']);
             }
 
             break;

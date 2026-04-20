@@ -1323,7 +1323,7 @@
 
                 var title = '<div class="mb20"><b class="modal-title flex ac"><span class="toggle-radius mr10 b-theme"><i class="fa fa-download"></i></span><span class="pay-download-title">添加资源</span></b></div>';
 
-                var input = '<div class="mb20"><div class="muted-color mb6">下载地址</div><div class="flex ac"><input type="text" class="form-control" tabindex="1" value="" name="link" placeholder="请输入下载地址"><botton type="button" class="flex0 ml6 pay-upload-btn but hollow c-blue"><i class="fa fa-upload"></i>上传文件</botton></div></div>';
+                var input = '<div class="mb20"><div class="muted-color mb6">下载地址</div><div class="flex ac"><input type="text" class="form-control" tabindex="1" value="" name="link" placeholder="请输入下载地址"><botton type="button" class="flex0 ml6 pay-upload-btn but hollow c-blue"><i class="fa fa-upload"></i>上传文件</botton></div><div class="px12 muted-3-color mt6">部分网盘分享链接可直接粘贴，可自动识别链接及提取码</div></div>';
 
                 input += '<div class="mb20"><div class="muted-color mb6">资源备注</div><input type="text" class="form-control" tabindex="1" value="" name="more" placeholder="请输入更多内容"><div class="px12 muted-3-color mt6">显示在下载按钮旁边的内容，建议为提取码、解压密码等</div></div>';
 
@@ -1386,9 +1386,36 @@
                     }
                 });
 
-                $modal.on('input', '[name="link"]', submitBtnSwitch);
                 $modal.on('click', '.pay-dawnload-submit', function () {
                     setData();
+                });
+
+                $modal.on('input', '[name="link"]', submitBtnSwitch);
+                //粘贴事件
+                $modal.on('paste', '[name="link"]', function (event) {
+                    var $this = $(this);
+                    var _val = event.originalEvent.clipboardData.getData('text');
+                    if (_val) {
+                        //链接判断
+                        var urlRegex = '(https?://.*?)[\r\n 提取]';
+                        var url_matches = _val.match(urlRegex);
+
+                        if (url_matches && url_matches[1]) {
+                            event.preventDefault();
+                            $this.val(url_matches[1]);
+                        }
+
+                        //提取码
+                        var codeRegex = '[提取码|密码][:|：]( |)([a-zA-Z0-9]{4,6})';
+                        var code_matches = _val.match(codeRegex);
+                        if (code_matches && code_matches[2]) {
+                            var code = code_matches[2];
+                            var parents = $modal;
+                            parents.find('input[name="more"]').val('提取码：' + code);
+                            parents.find('input[name="copy_key"]').val('提取码');
+                            parents.find('input[name="copy_val"]').val(code);
+                        }
+                    }
                 });
 
                 $modal.on('click', '.pay-upload-btn', function () {
@@ -1840,7 +1867,7 @@
 
     /************************************************************************************** */
 
-    var PluginManagerAdd = tinymce.PluginManager.add;
+    var PluginManagerAdd = (window.tinymce && window.tinymce.PluginManager.add) || function () {};
     PluginManagerAdd('zib_hide', function (editor) {
         var menu = [
             {
@@ -1920,6 +1947,17 @@
     //--------------------------引言------------------------------------
     PluginManagerAdd('zib_quote', function (editor) {
         editor.on('init', function () {
+            //页面刷新时提醒
+            window.addEventListener('beforeunload', (event) => {
+                // 只有在需要阻止时才触发确认
+                const shouldWarn = $(tinyMCE.activeEditor.getContent()).text().length > 10;
+                if (shouldWarn && !window.post_is_save) {
+                    event.preventDefault(); // 必须调用（Chrome/Edge/Firefox 2025+ 要求）
+                    event.returnValue = '当前内容暂未发布，请确认要离开吗？'; // 必须设置（兼容旧浏览器 + 触发确认框）
+                    return '当前内容暂未发布，请确认要离开吗？';
+                }
+            });
+
             let label = new Label();
             onBlur();
 

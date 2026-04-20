@@ -2,7 +2,7 @@
  * @Author: Qinver
  * @Url: zibll.com
  * @Date: 2021-08-11 16:08:49
- * @LastEditTime : 2026-01-31 17:33:17
+ * @LastEditTime : 2026-03-12 19:43:19
  */
 
 (function () {
@@ -262,10 +262,9 @@
         productInfoBox: function () {
             return `
                 <div class="touch product-info-box flex jsb p-d-mb" ${this.mounted_attr}>
-                    <div class="item-thumbnail product-graphic mr10 flex jc gradient-bg" data-opacity="0.1" v-html="${this.data_prefix}thumbnail"></div>
+                    <div class="item-thumbnail product-graphic mr10 flex jc gradient-bg nowave" data-opacity="0.1"><img class="alone-imgbox-img" imgbox-no-cache="true" :src="${this.data_prefix}main_image_url" :alt="${this.data_prefix}title"></div>
                     <div class="product-info flex jsb xx flex1">
                         <div class="product-title text-ellipsis font-bold mr20">{{ ${this.data_prefix}title }}</div>
-
                         <div class="cart-col-price product-price-box flex jsb ac">
                             <div class="price-box" :class="${this.data_prefix}pay_modo == 'points' ? 'c-yellow' : 'c-red'">
                                 <div class="mr6">
@@ -2079,7 +2078,7 @@
 
                     return this.discountHitModal(item_data, null, this.product_data);
                 },
-                //模态框数量变化
+                //列表数量变化
                 listCountChange: function (opt_data) {
                     this.countChange(opt_data);
                     if (!opt_data.checked) {
@@ -2096,6 +2095,12 @@
                     this.cart_modal_data.options_active[opt_index] = opt_val;
                     this.syncItemStock(this.cart_modal_data, this.product_data[this.cart_modal_data.product_id]);
                     this.modalSyncItemPrice();
+
+                    //主图切换，将自己的图赋予到主图位置
+                    var main_image_url = this.product_data[this.cart_modal_data.product_id].product_options[opt_index].opts[opt_val].image;
+                    if (main_image_url) {
+                        this.cart_modal_data.main_image_url = main_image_url;
+                    }
                 },
                 modalSyncItemPrice: function () {
                     this.syncItemPrice(this.cart_modal_data);
@@ -2191,6 +2196,9 @@
                     this.cart_data[_author_id][_product_id][_options_active_str].checked = true;
                     this.cart_data[_author_id][_product_id][_options_active_str].selected_count = _this_modal_data.selected_count;
                     this.cart_data[_author_id][_product_id][_options_active_str].stock_all = _this_modal_data.stock_all;
+                    this.cart_data[_author_id][_product_id][_options_active_str].main_image_url = _this_modal_data.main_image_url;
+
+                    console.log(_this_modal_data);
 
                     //同步商品选项
                     this.syncCartOptions();
@@ -2251,10 +2259,15 @@
                                 opt_data.options_active_str = optsKeyToStr(opt_data.options_active);
 
                                 if (!_this.isOptError(product_id, opt_data)) {
-                                    //选择的选项合法
+                                    //选中的选项合法
                                     $.each(opt_data.options_active, function (active_key, active_val) {
                                         if (product_options[active_key] && product_options[active_key].opts && product_options[active_key].opts[active_val]) {
                                             opt_data.options_active_name += product_options[active_key].opts[active_val].name + str_split;
+
+                                            //首次同步主图
+                                            if (!opt_data.main_image_url && product_options[active_key].opts[active_val].image) {
+                                                opt_data.main_image_url = product_options[active_key].opts[active_val].image;
+                                            }
                                         }
                                     });
                                 }
@@ -2266,6 +2279,11 @@
                                 //去除最后一个分隔符
                                 opt_data.options_active_name = opt_data.options_active_name.slice(0, -str_split.length);
                             }
+                        }
+
+                        //同步选项主图
+                        if (!opt_data.main_image_url) {
+                            opt_data.main_image_url = _this.product_data[product_id].main_image_url;
                         }
 
                         if (opt_data.options_active_str === '') {
@@ -2895,7 +2913,7 @@
                     );
                 },
                 cartAddAnimate: function (count) {
-                    var thumbnail_url = this.thumbnail_url;
+                    var thumbnail_url = this.main_image_url || this.thumbnail_url;
                     var image = '<img class="fit-cover" src="' + thumbnail_url + '">';
                     var cart_box = $('<div class="cart-add-animate flex jc fixed"><div class="animate-img"><div class="img-box">' + image + '</div></div></div>');
                     cart_box.appendTo('body');
@@ -2954,6 +2972,20 @@
 
                     //同步价格
                     this.syncPrice();
+
+                    //幻灯片图片切换
+                    if ($('.swiper-slide[product-opt-index="' + opt_id + '_' + item_id + '"]').length > 0) {
+                        var swiper = $('.product-cover-slider')[0].swiper;
+                        //获取要切换到第几个
+                        var index = $('.swiper-slide[product-opt-index="' + opt_id + '_' + item_id + '"]').index();
+                        swiper.slideTo(index);
+                    }
+
+                    //主图切换，将自己的图赋予到主图位置
+                    var main_image_url = this.product_options[opt_id].opts[item_id].image;
+                    if (main_image_url) {
+                        this.main_image_url = main_image_url;
+                    }
                 },
                 //数量变化
                 countChange: function () {

@@ -3,7 +3,7 @@
 * @Author : Qinver
 * @Url : zibll.com
 * @Date : 2025-03-06 19:47:03
- * @LastEditTime : 2026-01-31 16:34:35
+ * @LastEditTime : 2026-03-14 23:17:53
 * @Project : Zibll子比主题
 * @Description : 更优雅的Wordpress主题
 * Copyright (c) 2025 by Qinver, All Rights Reserved.
@@ -135,7 +135,7 @@ function zib_shop_user_order_list_card($html, $order_type, $order)
     $_opt_name  = $order_data['options_active_name'];
 
     if ($post) {
-        $_img   = zib_shop_get_product_thumbnail($post, 'radius8 fit-cover', 'medium');
+        $_img   = zib_shop_get_order_thumb($order, 'radius8 fit-cover', 'medium');
         $_title = '<span class="font-bold">' . $post->post_title . '</span>';
     } else {
         $_img   = zib_get_svg('order-color', null, 'fit-cover muted-box');
@@ -165,7 +165,7 @@ function zib_shop_user_order_list_card($html, $order_type, $order)
     }
 
     if ($status == '0') {
-        $time_remaining  = zib_time_to_c($time_remaining);
+        $time_remaining = zib_time_to_c($time_remaining);
         $_status_name   = '<span class="c-red">待支付 <span class="c-yellow px12 badg badg-sm" int-second="1" data-over-text="交易已关闭" data-countdown="' . $time_remaining . '"></span></span>';
     }
 
@@ -225,7 +225,7 @@ function zib_shop_user_order_list_card($html, $order_type, $order)
                 $progress = zib_shop_get_order_after_sale_progress($after_sale_data);
                 if ($progress === 1) {
                     if ($return_express_over_time) {
-                        $time_remaining  = zib_time_to_c($return_express_over_time);        
+                        $time_remaining = zib_time_to_c($return_express_over_time);
 
                         $time_countdown = '<span class="ml10 em09 muted-2-color">剩余发货时间：<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $time_remaining . '"></span></span>';
                     } else {
@@ -497,7 +497,7 @@ function zib_shop_user_order_details_consignee_box($order)
             $address_html = '';
             if ($address) {
                 $modify_address_button = zib_shop_get_order_modify_address_link($order, 'flex0 ml20 em09 muted-color', '修改<i class="fa fa-angle-right em12 ml6"></i>'); //修改地址的按钮
-                $address_html = '<div class="flex muted-color mt10 at">
+                $address_html          = '<div class="flex muted-color mt10 at">
                 <div class="icon-header mr10"><i class="fa-fw fa fa-map-marker"></i></div>
                     <div class="flex1">
                         <div class=""><b>' . $address['city'] . $address['address'] . '</b></div>
@@ -587,7 +587,7 @@ function zib_shop_user_order_details_header_title($order)
         if ($time_remaining == 'over') {
             $status == -1;
         } else {
-            $time_remaining  = zib_time_to_c($time_remaining);
+            $time_remaining = zib_time_to_c($time_remaining);
             $time_countdown = '<div class="mt6 em09 muted-2-color">剩余<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $time_remaining . '"></span>自动关闭订单</div>';
         }
     }
@@ -614,8 +614,8 @@ function zib_shop_user_order_details_header_title($order)
             $receipt_over_time = zib_shop_get_order_receipt_over_time($order['id']);
 
             if ($receipt_over_time && $receipt_over_time != 'over') {
-                $receipt_over_time_time_remaining  = zib_time_to_c($receipt_over_time);
-                $status_text .= '<div class="mt6 em09 muted-2-color">剩余<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $receipt_over_time_time_remaining. '"></span>自动确认收货</div>';
+                $receipt_over_time_time_remaining = zib_time_to_c($receipt_over_time);
+                $status_text .= '<div class="mt6 em09 muted-2-color">剩余<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $receipt_over_time_time_remaining . '"></span>自动确认收货</div>';
             }
         } else {
             $status_text = '<b class="inflex ac"><i class="fa fa-check-circle-o mr6 em12"></i>交易完成</b>';
@@ -636,7 +636,7 @@ function zib_shop_user_order_details_header_title($order)
                         $progress = zib_shop_get_order_after_sale_progress($after_sale_data);
                         if ($progress === 1) {
                             if ($return_express_over_time) {
-                                $time_remaining  = zib_time_to_c($return_express_over_time);
+                                $time_remaining = zib_time_to_c($return_express_over_time);
                                 $time_countdown = '<span class="ml10 em09 muted-2-color">剩余发货时间：<span class="c-yellow badg badg-sm" int-second="1" data-over-text="1秒" data-countdown="' . $time_remaining . '"></span></span>';
                             } else {
                                 $time_countdown = '';
@@ -690,7 +690,7 @@ function zib_shop_user_order_product_box($order, $class = 'mb10')
     $post_id = $order['post_id'];
     $post    = get_post($post_id);
     if ($post) {
-        $_img   = zib_shop_get_product_thumbnail($post, 'radius8 fit-cover', 'medium');
+        $_img   = zib_shop_get_order_thumb($order, 'radius8 fit-cover', 'medium');
         $_title = '<a href="' . get_permalink($post) . '" class="text-ellipsis mb6 font-bold">' . $post->post_title . '</a>';
     } else {
         $_img   = zib_get_svg('order-color', null, 'fit-cover muted-box');

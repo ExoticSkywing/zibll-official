@@ -69,7 +69,7 @@
                                 <div class="div-checkbox" :class="{ 'is-disabled': opt_data.options_active_error || opt_data.stock_all == 0, 'checked': opt_data.checked }"></div>
                             </div>
                             <div class="cart-col-right">
-                                <div class="item-thumbnail product-graphic gradient-bg" data-opacity="0.1" v-html="product_data[product_id].thumbnail"></div>
+                                <div class="item-thumbnail product-graphic gradient-bg nowave" data-opacity="0.1"><img :src="opt_data.main_image_url" :alt="product_data[product_id].title"></div>
                                 <div class="cart-col-main">
                                     <div class="cart-col-product">
                                         <div class="product-title text-ellipsis-2">

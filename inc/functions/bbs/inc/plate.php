@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-23 15:24:01
+ * @LastEditTime : 2026-03-14 23:37:55
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|版块类函数|plate
@@ -14,6 +14,7 @@
 //获取版块排序方式选项
 function zib_bbs_get_plate_order_options()
 {
+    global $zib_bbs;
     $args = array(
         'name'              => '标题名称',
         'date'              => '创建时间',
@@ -24,7 +25,7 @@ function zib_bbs_get_plate_order_options()
         'reply_count'       => '最多回复',
         'today_reply_count' => '今日最多回复',
         'views'             => '最多查看(热门)',
-        'follow_count'      => '最多关注',
+        'follow_count'      => '最多' . $zib_bbs->plate_follow_name,
         'rand'              => '随机',
     );
 
@@ -51,6 +52,7 @@ function zib_bbs_get_plate_type_options()
 function zib_bbs_get_plate_header($plate_id = 0, $class = '', $show_cat = true)
 {
 
+    global $zib_bbs;
     $post = get_post($plate_id);
     if (empty($post->ID)) {
         return;
@@ -78,7 +80,7 @@ function zib_bbs_get_plate_header($plate_id = 0, $class = '', $show_cat = true)
 
     $follow_count = zib_bbs_get_plate_follow_cut_count($plate_id);
     if ($follow_count) {
-        $ount_mate .= '<item class="mate-follow mr10">关注 ' . $follow_count . '</item>';
+        $ount_mate .= '<item class="mate-follow mr10">' . $zib_bbs->plate_follow_name . ' ' . $follow_count . '</item>';
     } else {
         $ount_mate .= '<item class="mate-views mr10">阅读 ' . zib_bbs_get_plate_views_cut_count($plate_id) . '</item>';
     }
@@ -162,10 +164,7 @@ function zib_bbs_get_plate_header_moderator_btns($post)
         $moderator_link = zib_bbs_get_add_plate_moderator_link($plate_id, $class, '添加' . $zib_bbs->plate_moderator_name . '<i class="ml6 fa fa-angle-right em12" style="margin-right: 0;"></i>');
     }
     $btns .= $moderator_link;
-
     $btns .= zib_bbs_get_posts_add_page_link(array('plate_id' => $plate_id), $class, zib_get_svg('add') . '发布');
-
-    //  $btns .= zib_bbs_get_all_plate_follow_btn($plate_id, $class, zib_get_svg('add') . '关注');
 
     return $btns;
 }
@@ -244,6 +243,47 @@ function zib_bbs_get_plate_set_add_limit_link($id = 0, $class = '', $con = '<i c
 }
 
 /**
+ * 获取版块设置付费关注的链接按钮
+ * @param {*} $plate_id
+ * @param {*} $class
+ * @param {*} $con
+ * @param {*} $tag
+ * @return {*}
+ */
+function zib_bbs_get_plate_follow_pay_set_link($plate_id = 0, $class = '', $con = '', $tag = 'a')
+{
+
+    if (!$plate_id || !zib_bbs_current_user_can('plate_set_follow_pay', $plate_id)) {
+        return;
+    }
+
+    if (!$con) {
+        global $zib_bbs;
+        $con = '<i class="fa fa-fw fa-money mr6"></i>设置付费' . $zib_bbs->plate_follow_name;
+    }
+
+    $class .= ' follow-pay-set';
+
+    $url_var = array(
+        'action' => 'plate_follow_pay_set_modal',
+        'id'     => $plate_id,
+    );
+
+    $args = array(
+        'tag'           => $tag,
+        'class'         => $class,
+        'data_class'    => 'modal-mini',
+        'height'        => 268,
+        'mobile_bottom' => true,
+        'text'          => $con,
+        'query_arg'     => $url_var,
+    );
+
+    //每次都刷新的modal
+    return zib_get_refresh_modal_link($args);
+}
+
+/**
  * @description: 获取版块设置阅读权限的链接按钮
  * @param {*} $plate_id
  * @param {*} $cat_id
@@ -313,6 +353,307 @@ function zib_bbs_get_set_add_limit_link($type = 'plate', $id = 0, $class = '', $
     return zib_get_refresh_modal_link($args);
 }
 
+//获取板块付费加入的数据
+function zib_bbs_get_plate_follow_pay_options($plate_id)
+{
+    $data = array(
+        's'            => (int) get_post_meta($plate_id, 'follow_pay', true),
+        'pay_modo'     => '0',
+        'pay_price'    => 0,
+        'vip_1_price'  => 0,
+        'vip_2_price'  => 0,
+        'points_price' => 0,
+        'vip_1_points' => 0,
+        'vip_2_points' => 0,
+    );
+    $opt = zib_get_post_meta($plate_id, 'follow_pay_args', true);
+    if ($opt && is_array($opt)) {
+        $data = array_merge($data, $opt);
+    }
+
+    if ($data['s'] && $data['pay_modo'] === 'points' && (int) $data['points_price'] <= 0) {
+        $data['s'] = 0;
+    }
+    if ($data['s'] && $data['pay_modo'] != 'points' && (float) $data['pay_price'] <= 0) {
+        $data['s'] = 0;
+    }
+
+    return $data;
+}
+
+/**
+ * 获取板块关注的支付价格
+ * @param {*} $plate_id
+ * @return {*}
+ */
+
+function zib_bbs_get_plate_follow_pay_price($plate_id, $user_id)
+{
+    $opt = zib_bbs_get_plate_follow_pay_options($plate_id);
+    if (!$opt['s']) {
+        return 0;
+    }
+
+    $is_points = $opt['pay_modo'] === 'points';
+    $vip_level = zib_get_user_vip_level($user_id);
+    $price     = $is_points ? $opt['points_price'] : $opt['pay_price'];
+
+    if ($vip_level && _pz('pay_user_vip_' . $vip_level . '_s', true)) {
+        $vip_price = $is_points ? $opt['vip_' . $vip_level . '_points'] : $opt['vip_' . $vip_level . '_price'];
+        $price     = min($price, $vip_price);
+    }
+    return $price;
+}
+
+/**
+ * @description: 获取付费关注收银台
+ * @param {*} $plate_id
+ * @return {*}
+ */
+function zib_bbs_get_plate_follow_pay_cashier_modal($plate_id)
+{
+    $user_id = get_current_user_id();
+    $opt     = zib_bbs_get_plate_follow_pay_options($plate_id);
+    if (!$opt['s'] || !$user_id) {
+        return;
+    }
+
+    //获取此用户、此商品，待支付的订单
+    $wait_payment_data = zibpay_get_current_user_post_wait_payment($plate_id, 11);
+    if ($wait_payment_data) {
+        return zibpay_get_order_pay_modal_content($wait_payment_data, get_permalink($plate_id));
+    }
+
+    global $zib_bbs;
+    $pay_type  = 11;
+    $name      = $zib_bbs->plate_name;
+    $pay_title = '请确认付费' . $zib_bbs->plate_follow_name . $name . '[' . get_the_title($plate_id) . ']';
+
+    $is_points  = $opt['pay_modo'] === 'points';
+    $mark       = $is_points ? zibpay_get_points_mark() : zibpay_get_pay_mark();
+    $mark       = '<span class="pay-mark px12">' . $mark . '</span>';
+    $vip_level  = zib_get_user_vip_level($user_id);
+    $show_price = $is_points ? $opt['points_price'] : $opt['pay_price'];
+    $pay_price  = $show_price;
+    $vip_price  = 'no';
+    if ($vip_level && _pz('pay_user_vip_' . $vip_level . '_s', true)) {
+        $vip_price = $is_points ? $opt['vip_' . $vip_level . '_points'] : $opt['vip_' . $vip_level . '_price'];
+        $vip_price = $vip_price < $show_price ? $vip_price : $show_price;
+        $pay_price = $vip_price;
+    }
+
+    //商品卡片
+    $con = '<form>';
+    $con .= '<div class="mb10 order-type-11"><span>' . $pay_title . '</span></div>';
+    $con .= '<div class="mb10 muted-box padding-h6 line-16">';
+    $con .= '<div class="flex jsb ab"><span class="muted-2-color">价格</span><div><span>' . $mark . '<span class="em14">' . $show_price . '</span></span></div></div>';
+    $con .= $vip_price !== 'no' && $vip_price < $show_price ? '<div class="flex jsb ab"><span class="muted-2-color">会员价' . zibpay_get_vip_icon($vip_level, 'ml3') . '</span><span class="c-red">' . $mark . '<span class="em14">' . $vip_price . '</span></span></div>' : '';
+    $con .= '</div>';
+
+    if ($pay_price == 0) {
+        $con .= '<input type="hidden" name="action" value="follow_plate_confirm">';
+        $con .= '<input type="hidden" name="type" value="free">';
+        $con .= '<button class="but jb-blue padding-lg btn-block radius wp-ajax-submit mt10" >免费' . $zib_bbs->plate_follow_name . '</button>';
+    } else {
+        if ($is_points) {
+            //我的积分卡片
+            $user_points = zibpay_get_user_points($user_id);
+            $con .= '<div class="mb10 muted-box">';
+            $con .= '<div class="flex jsb ab"><span class="muted-2-color">' . zib_get_svg('points-color', null, 'em12 mr6') . '我的积分</span><div><span class="c-green">' . $mark . '<span class="em14">' . $user_points . '</span></span></div></div>';
+            $con .= '</div>';
+
+            //如果积分不足
+            if ($pay_price > $user_points) {
+                $points_pay_link = zibpay_get_points_pay_link('but c-green padding-lg', '购买积分');
+                $points_user_url = zib_get_user_center_url('balance');
+
+                $con .= '<div class="badg c-red btn-block mb20">抱歉，您的积分不足，暂时无法支付</div>';
+                $con .= '<div class="modal-buts but-average"><a rel="nofollow" type="button" class="but padding-lg" href="' . $points_user_url . '">我的积分</a>' . $points_pay_link . '</div>';
+            } else {
+                $con .= '<input type="hidden" name="payment_method" value="points">';
+                $con .= '<input type="hidden" name="action" value="submit_order">';
+                $con .= '<button class="but jb-yellow padding-lg btn-block radius wp-ajax-submit mt10" >立即支付 ' . $mark . $pay_price . '</button>';
+            }
+
+        } else {
+            //显示付款方式
+            add_filter('zibpay_is_allow_card_pass_pay', '__return_false'); //禁止卡密充值
+
+            $con .= zibpay_get_initiate_pay_input($pay_type, $pay_price, $plate_id, false);
+        }
+    }
+
+    $con .= '<input type="hidden" name="return_url" value="' . get_permalink($plate_id) . '">';
+    $con .= '<input type="hidden" name="post_id" value="' . $plate_id . '">';
+    $con .= '<input type="hidden" name="order_type" value="11">';
+    $con .= '<input type="hidden" name="pay_modo" value="' . $opt['pay_modo'] . '">';
+    $con .= '</form>';
+
+    $header = zib_get_modal_colorful_header('jb-blue', '<i class="fa fa-cart-plus"></i>', '付费' . $zib_bbs->plate_follow_name . $name);
+    return $header . $con;
+}
+
+//挂钩付费关注订单创建
+function zib_bbs_initiate_order_data_follow_plate($__data, $post_data)
+{
+    global $zib_bbs;
+    $plate_id = !empty($post_data['post_id']) ? (int) $post_data['post_id'] : 0;
+    $post     = get_post($plate_id);
+    $user_id  = get_current_user_id();
+    if (empty($post->ID)) {
+        zib_send_json_error($zib_bbs->plate_name . '数据获取错误');
+    }
+
+    if (!$user_id) {
+        zib_send_json_error('请先登录');
+    }
+
+    $opt       = zib_bbs_get_plate_follow_pay_options($plate_id);
+    $is_points = $opt['pay_modo'] === 'points';
+    $pay_price = zib_bbs_get_plate_follow_pay_price($plate_id, $user_id);
+    if ($pay_price <= 0) {
+        zib_send_json_error('当前' . $zib_bbs->plate_name . '不需要付费' . $zib_bbs->plate_follow_name . '，请刷新页面后重试');
+    }
+
+    //整理数据
+    $__data['post_author'] = $post->post_author;
+    $__data['order_price'] = $pay_price;
+
+    if ($is_points) {
+        $__data['payment_method'] = 'points';
+
+    } else {
+        $payment_method = !empty($post_data['payment_method']) ? $post_data['payment_method'] : '';
+        if ($payment_method === 'points') {
+            zib_send_json_error('支付方式错误，请刷新页面后重试');
+        }
+    }
+
+    $__data['mate_order_data'] = array(
+        'product_id'    => $plate_id,
+        'product_title' => $zib_bbs->plate_follow_name . $zib_bbs->plate_name . '-' . $post->post_title,
+    );
+
+    return $__data;
+}
+add_filter('initiate_order_data_type_11', 'zib_bbs_initiate_order_data_follow_plate', 10, 2);
+
+//zibpay_order_title 挂钩
+function zib_bbs_order_title_plate_follow($title, $order)
+{
+    global $zib_bbs;
+    if ($order['order_type'] == 11) {
+        return $zib_bbs->plate_follow_name . $zib_bbs->plate_name . '-' . $title;
+    }
+    return $title;
+}
+add_filter('zibpay_order_title', 'zib_bbs_order_title_plate_follow', 10, 2);
+
+//挂钩订单支付完成
+function zib_bbs_payment_order_success_plate_follow($order)
+{
+    global $zib_bbs;
+    $order = (array) $order;
+    if ($order['order_type'] == 11) {
+        $user_id  = $order['user_id'];
+        $plate_id = $order['post_id'];
+        //执行关注板块
+        if (!zib_bbs_is_followed_plate($plate_id, $user_id)) {
+            zib_bbs_follow_plate_toggle($plate_id, $user_id);
+        }
+    }
+}
+add_action('payment_order_success', 'zib_bbs_payment_order_success_plate_follow', 10, 1);
+
+/**
+ * 获取取消关注版块的确认模态框
+ * @param {*} $plate_id
+ * @return {*}
+ */
+function zib_bbs_get_plate_follow_cancel_modal($plate_id)
+{
+    $user_id = get_current_user_id();
+    $opt     = zib_bbs_get_plate_follow_pay_options($plate_id);
+    if (!$opt['s'] || !$user_id) {
+        return;
+    }
+    global $zib_bbs;
+
+    $header = zib_get_modal_colorful_header('jb-yellow', '<i class="fa fa-times"></i>', '取消' . $zib_bbs->plate_follow_name . '此' . $zib_bbs->plate_name);
+    $con    = '<div class="">
+    <span class="muted-2-color">当前' . $zib_bbs->plate_name . '为付费' . $zib_bbs->plate_follow_name . '，</span>
+    <span class="muted-2-color">取消后如需再次' . $zib_bbs->plate_follow_name . '，需要重新付费！</span>
+    <div class="c-red mt10">请确认真的要取消' . $zib_bbs->plate_follow_name . '此' . $zib_bbs->plate_name . '吗？</div>
+
+        <button class="but jb-red padding-lg btn-block radius wp-ajax-submit mt20" form-action="follow_plate_confirm" form-data="' . esc_attr(json_encode(['id' => $plate_id])) . '">确认取消' . $zib_bbs->plate_follow_name . '</button>
+    </div>';
+
+    return $header . $con;
+}
+
+/**
+ * @description: 版块关注或取消关注，相互切换的通用函数
+ * @param {*} $id
+ * @param {*} $user_id
+ * @return {*}
+ */
+function zib_bbs_follow_plate_toggle($id, $user_id)
+{
+
+    global $zib_bbs;
+    $is_follow          = zib_get_user_meta($user_id, 'follow_plate', true);
+    $is_follow          = $is_follow ? $is_follow : array();
+    $is_follow_ed       = in_array($id, $is_follow);
+    $plate_follow_count = (int) get_post_meta($id, 'follow_count', true);
+
+    if ($is_follow_ed) {
+        //取消关注
+        $index = array_search($id, $is_follow);
+        unset($is_follow[$index]);
+
+        $new_count = $plate_follow_count - 1;
+        $type      = 'cancel';
+        $active    = false;
+        $text      = $zib_bbs->plate_follow_name;
+    } else {
+        //关注
+        $type   = 'add';
+        $text   = '已' . $zib_bbs->plate_follow_name;
+        $active = true;
+
+        $is_follow[] = $id;
+        $new_count   = $plate_follow_count + 1;
+    }
+    $new_count = $new_count < 0 ? 0 : $new_count;
+    $is_follow = array_values($is_follow);
+
+    zib_update_user_meta($user_id, 'follow_plate', $is_follow);
+
+    update_post_meta($id, 'follow_count', $new_count);
+
+    wp_cache_set($user_id, $is_follow, 'bbs_user_follow_plate');
+
+    do_action('bbs_follow_plate', $id, $user_id); //添加挂钩
+
+    return array(
+        'type'         => $type,
+        'id'           => $id,
+        'new_count'    => $new_count,
+        'follow_plate' => $is_follow,
+        'active'       => $active,
+        'text'         => $text,
+    );
+
+}
+
+//获取用户付费关注版块的分成比例
+function zib_bbs_get_user_follow_pay_income_ratio($user_id, $plate_id)
+{
+    //暂未启用
+    $ratio = 0;
+    return $ratio;
+}
+
 //获取版块的发布限制图标
 function zib_bbs_get_plate_add_limit_btn($id = 0, $class = '', $text = '')
 {
@@ -332,25 +673,31 @@ function zib_bbs_get_add_limit_btn($type = 'plate', $id = 0, $class = '', $text 
     }
     global $zib_bbs;
     if ('plate' === $type) {
-        $add_limit = (int) get_term_meta($id, 'add_limit', true);
+        $add_limit = get_term_meta($id, 'add_limit', true);
         if (!$add_limit) {
             return;
         }
         $desc = '可在此' . $zib_bbs->plate_name . '分类创建' . $zib_bbs->plate_name;
 
     } else {
-        $add_limit = (int) get_post_meta($id, 'add_limit', true);
+        $add_limit = get_post_meta($id, 'add_limit', true);
         if (!$add_limit) {
             return;
         }
         $desc = '可在此' . $zib_bbs->plate_name . '发布' . $zib_bbs->posts_name;
     }
 
-    $_id         = 'bbs_' . $type . '_add_limit_' . $add_limit;
-    $_name       = _pz('user_cap', array(), $_id);
-    $name        = !empty($_name['name']) ? $_name['name'] : '限制' . $add_limit;
-    $roles_lists = zib_bbs_get_cap_roles_lists($type . '_add_limit_' . $add_limit);
-    $roles_lists = $roles_lists ? '<div class="mb6 muted-2-color">以下用户组' . $desc . '</div>' . zib_str_remove_lazy($roles_lists) : '<div class="c-yellow">仅管理员' . $desc . '</div>';
+    if ($add_limit == 'follow') {
+        $name        = '';
+        $roles_lists = '<div class="mb6 muted-2-color">' . $zib_bbs->plate_follow_name . '此' . $zib_bbs->plate_name . '后可发布</div>';
+    } else {
+        $_id         = 'bbs_' . $type . '_add_limit_' . $add_limit;
+        $_name       = _pz('user_cap', array(), $_id);
+        $name        = !empty($_name['name']) ? $_name['name'] : '限制' . $add_limit;
+        $roles_lists = zib_bbs_get_cap_roles_lists($type . '_add_limit_' . $add_limit);
+        $roles_lists = $roles_lists ? '<div class="mb6 muted-2-color">以下用户组' . $desc . '</div>' . zib_str_remove_lazy($roles_lists) : '<div class="c-yellow">仅管理员' . $desc . '</div>';
+    }
+
     if (!$text) {
         $text = '<i class="fa fa-unlock-alt mr3"></i>' . $name;
     }
@@ -370,16 +717,21 @@ function zib_bbs_get_plate_badge_popover($post = null, $class = '', $text = '')
     $id            = $post->ID;
     $con           = '';
     $add_limit_con = '';
-    $add_limit     = (int) get_post_meta($id, 'add_limit', true);
+    $add_limit     = get_post_meta($id, 'add_limit', true);
     if ($add_limit) {
-        $desc = '可在此' . $zib_bbs->plate_name . '发布' . $zib_bbs->posts_name;
-        if (!$text) {
-            $_id   = 'bbs_posts_add_limit_' . $add_limit;
-            $_name = _pz('user_cap', array(), $_id);
-            $text  = !empty($_name['name']) ? $_name['name'] : '';
+        if ($add_limit == 'follow') {
+            $roles_lists = '<div class="separator c-yellow">' . $zib_bbs->plate_follow_name . '此' . $zib_bbs->plate_name . '后可发布' . $zib_bbs->posts_name . '</div>';
+        } else {
+            $desc = '可在此' . $zib_bbs->plate_name . '发布' . $zib_bbs->posts_name;
+            if (!$text) {
+                $_id   = 'bbs_posts_add_limit_' . $add_limit;
+                $_name = _pz('user_cap', array(), $_id);
+                $text  = !empty($_name['name']) ? $_name['name'] : '';
+            }
+            $roles_lists = zib_bbs_get_cap_roles_lists('posts_add_limit_' . $add_limit);
+            $roles_lists = $roles_lists ? '<p class="separator muted-3-color mb6">以下用户组' . $desc . '</p>' . $roles_lists : '<div class="separator c-yellow">仅管理员' . $desc . '</div>';
         }
-        $roles_lists   = zib_bbs_get_cap_roles_lists('posts_add_limit_' . $add_limit);
-        $roles_lists   = $roles_lists ? '<p class="separator muted-3-color mb6">以下用户组' . $desc . '</p>' . $roles_lists : '<div class="separator muted-3-color mb6 c-yellow">仅管理员' . $desc . '</div>';
+
         $add_limit_con = '<div class="em09">' . $roles_lists . '</div>';
     }
 
@@ -483,7 +835,7 @@ function zib_bbs_get_plate_count_mates($plate_id = 0)
     }
 
     $follow_count = zib_bbs_get_plate_follow_cut_count($plate_id);
-    $follow_count = $follow_count ? '<item class="mate-follow" data-toggle="tooltip" title="关注"><icon class=""><i class="fa fa-heart-o"></i></icon>' . $follow_count . '</item>' : '';
+    $follow_count = $follow_count ? '<item class="mate-follow" data-toggle="tooltip" title="已' . $zib_bbs->plate_follow_name . '"><icon class=""><i class="fa fa-heart-o"></i></icon>' . $follow_count . '</item>' : '';
 
     $views_count = zib_bbs_get_plate_views_cut_count($plate_id);
     $views_count = '<item class="mate-views mr10" data-toggle="tooltip" title="热度"><icon class="">' . zib_get_svg('hot') . '</icon>' . $views_count . '</item>';
@@ -502,7 +854,7 @@ function zib_bbs_get_plate_count_mates($plate_id = 0)
  */
 function zib_bbs_get_plate_card($class = '', $follow = true, $today = false)
 {
-    global $post;
+    global $post, $zib_bbs;
     $class = $class ? ' ' . $class : '';
     $title = esc_attr(get_the_title());
 
@@ -514,7 +866,7 @@ function zib_bbs_get_plate_card($class = '', $follow = true, $today = false)
     $follow_count    = zib_bbs_get_plate_follow_cut_count($post->ID);
     $all_reply_count = zib_bbs_get_plate_reply_cut_count($post->ID);
 
-    $title_attr = $follow_count ? $follow_count . '人关注' : '';
+    $title_attr = $follow_count ? $follow_count . '人' . $zib_bbs->plate_follow_name : '';
     $title_attr .= $title_attr ? ' ' : '';
     $title_attr .= $all_reply_count ? $all_reply_count . '次互动' : '';
     $title_attr = $title_attr ? ' data-toggle="tooltip" title="' . $title_attr . '"' : '';
@@ -580,11 +932,19 @@ function zib_bbs_get_main_plate($class = '')
  * @param {*} $ok_text
  * @return {*}
  */
-function zib_bbs_get_all_plate_follow_btn($plate_id, $class = 'but jb-pink', $text = '关注', $ok_text = '已关注')
+function zib_bbs_get_all_plate_follow_btn($plate_id, $class = 'but jb-pink', $text = '', $ok_text = '')
 {
 
+    global $zib_bbs;
+    if (!$text) {
+        $text = $zib_bbs->plate_follow_name;
+    }
+    if (!$ok_text) {
+        $ok_text = '已' . $zib_bbs->plate_follow_name;
+    }
+
     $user_id = get_current_user_id();
-    if (zib_is_my_meta_ed('follow_plate', $plate_id)) {
+    if (zib_bbs_is_followed_plate($plate_id, $user_id)) {
         $class .= ' active';
         $text = $ok_text;
     }
@@ -595,6 +955,24 @@ function zib_bbs_get_all_plate_follow_btn($plate_id, $class = 'but jb-pink', $te
         $class .= ' signin-loader';
     }
     return '<a href="javascript:;"' . $action . ' class="btn-follow ' . $class . '" data-id="' . $plate_id . '"><text>' . $text . '</text></a>';
+}
+
+/**
+ * @description: 判断是否关注版块
+ * @param {*} $plate_id
+ * @return {*} bool
+ */
+function zib_bbs_is_followed_plate($plate_id, $user_id = null)
+{
+    if ($user_id === null) {
+        $user_id = get_current_user_id();
+    }
+
+    if (!$user_id || !$plate_id) {
+        return false;
+    }
+
+    return zib_is_my_meta_ed('follow_plate', $plate_id);
 }
 
 //移动版快
@@ -1048,9 +1426,9 @@ function zib_bbs_get_plate_info_mini_box($post = null, $class = '')
     $ount_mate = '<div class="count-mates text-center">' . $ount_mate . '</div>';
 
     $follow_count = zib_bbs_get_plate_follow_cut_count($plate_id);
-    $follow_html  = $follow_count ? '<badge class="img-badge px12 follow-info">' . $follow_count . '人已关注</badge>' : '';
+    $follow_html  = $follow_count ? '<badge class="img-badge px12 follow-info">' . $follow_count . '人已' . $zib_bbs->plate_follow_name . '</badge>' : '';
 
-    $follow_btn = zib_bbs_get_all_plate_follow_btn($plate_id, 'but hollow c-red', zib_get_svg('add') . '关注');
+    $follow_btn = zib_bbs_get_all_plate_follow_btn($plate_id, 'but hollow c-red', zib_get_svg('add') . $zib_bbs->plate_follow_name);
     $new_btn    = zib_bbs_get_posts_add_page_link(array('plate_id' => $plate_id), 'but hollow c-blue mr10');
 
     $btn = '<div class="mt20 mb20 buts">' . $new_btn . $follow_btn . '</div>';
@@ -1105,12 +1483,20 @@ function zib_bbs_get_plate_search_btn($plate_id, $class = '')
     return zib_get_search_link($args);
 }
 
+/**
+ * @description: 获取版块更多按钮
+ * @param {*} $plate_id
+ * @param {*} $class
+ * @param {*} $show_follow
+ * @return {*}
+ */
 function zib_bbs_get_plate_header_more_btn($plate_id, $class = '', $show_follow = false)
 {
+    global $zib_bbs;
 
     $html = '';
     if ($show_follow) {
-        $follow_btn = zib_bbs_get_all_plate_follow_btn($plate_id, $class, '<i title="关注" class="fa fa-heart-o mr6 em12"></i>', '<i title="已关注" class="fa fa-heart mr6 em12"></i>');
+        $follow_btn = zib_bbs_get_all_plate_follow_btn($plate_id, $class, '<i title="' . $zib_bbs->plate_follow_name . '" class="fa fa-heart-o mr6 em12"></i>', '<i title="已' . $zib_bbs->plate_follow_name . '" class="fa fa-heart mr6 em12"></i>');
         $html .= $follow_btn ? $follow_btn : '';
     }
 
@@ -1167,6 +1553,9 @@ function zib_bbs_get_plate_more_dropdown($plate_id, $class = '', $con_class = ''
 
     $allow_view = zib_bbs_get_plate_allow_view_set_link($plate_id);
     $action .= $allow_view ? '<li>' . $allow_view . '</li>' : '';
+
+    $follow_pay = zib_bbs_get_plate_follow_pay_set_link($plate_id);
+    $action .= $follow_pay ? '<li>' . $follow_pay . '</li>' : '';
 
     $edit = zib_bbs_get_edit_plate_moderator_link($plate_id, '', zib_get_svg('circle', null, 'icon mr6 fa-fw') . '管理' . $zib_bbs->plate_moderator_name);
     $action .= $edit ? '<li>' . $edit . '</li>' : '';

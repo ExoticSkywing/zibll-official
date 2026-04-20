@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-23 23:16:33
- * @LastEditTime : 2026-01-29 15:34:41
+ * @LastEditTime : 2026-03-30 11:53:34
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|编辑功能相关
@@ -214,6 +214,180 @@ class zib_bbs_edit
         wp_editor($content, $id, $settings);
     }
 
+    //快速发布
+    public static function quick_posts($args = array())
+    {
+
+        if (!zib_bbs_current_user_can('posts_add')) {
+            return;
+        }
+
+        $defaults = array(
+            'class'          => 'zib-widget mb10-sm mb20',
+            'title'          => '',
+            'content'        => '',
+            'plate_id'       => 0,
+            'post_author'    => 0,
+            'post_date'      => 0,
+            'post_status'    => 0,
+            'comment_status' => 0,
+        );
+        global $zib_bbs;
+        $args    = wp_parse_args($args, $defaults);
+        $in_args = self::posts_in(0);
+        $user_id = get_current_user_id();
+
+        $title_input   = zib_bbs_edit::posts_title();
+        $content_input = '<div class="relative edit-posts-content"><textarea type="text" class="" name="post_content" tabindex="2" placeholder="' . _pz('bbs_c_placeholder', '请输入内容') . '" autoheight="true" maxheight="200" style=""></textarea></div>';
+        $upload_input  = '';
+        if (zib_bbs_current_user_can('posts_upload_img') || !$user_id) {
+            $upload_input = '<div class="' . ($user_id ? 'quick-upload' : 'signin-loader') . '">';
+            $upload_input .= '<div class="preview">'; //正方形
+            $upload_input .= '<div class="add"></div>';
+            $upload_input .= '</div>';
+            $upload_input .= '</div>';
+        }
+
+        //话题、标签
+
+        //更多按钮
+        $topic_input = '<div class="topic-drop drop-select dropdown mr20">
+            <div data-target=".topic-drop" data-toggle-class="open" class="flex ac jsb drop-btn"><icon class="mr3">' . zib_get_svg('topic') . '</icon>' . $zib_bbs->topic_name . '</div>
+            <input type="hidden" name="topic" value="">
+            <div class="dropdown-menu fluid">
+                <div class="flex ac jsb padding-10">
+                    <div data-for="topic" data-value="null" class="pointer but p2-10"><i class="fa fa-ban mr6"></i>不添加' . $zib_bbs->topic_name . '</div>
+                </div>
+                ' . zib_get_remote_box(['query' => ['action' => 'topic_select_box'], 'loader' => '<div class="flex jc" style="min-height:100px;"><i class="loading-spot"><i></i></i></div>']) . '
+            </div>
+        </div>';
+        $tag_input = '<div class="tag-drop drop-select dropdown mr20">
+            <div data-target=".tag-drop" data-toggle-class="open" class="flex ac jsb drop-btn"><icon class="mr3">' . zib_get_svg('tags') . '</icon>' . $zib_bbs->tag_name . '</div>
+            <input type="hidden" name="tag[]" value="">
+            <div class="dropdown-menu fluid">
+                ' . zib_get_remote_box(['query' => ['action' => 'tag_select_box'], 'loader' => '<div class="flex jc" style="min-height:100px;"><i class="loading-spot"><i></i></i></div>']) . '
+            </div>
+        </div>';
+
+        $allow_view_input = '';
+        if (zib_bbs_current_user_can('posts_allow_view_add')) {
+            $allow_view_input = '<div class="allow-view-drop drop-select dropdown mr20">
+            <div data-target=".allow-view-drop" data-toggle-class="open" class="flex ac jsb drop-btn"><icon class="mr3">' . zib_get_svg('view', null, '') . '</icon><span name="allow_view">公开</span></div>
+            <div class="dropdown-menu fluid dependency-box">
+                <div class="mini-scrollbar padding-10 select-drop-box">
+                <div class="em09 muted-3-color mb10">设置该' . $zib_bbs->posts_name . '的阅读权限</div>
+                ' . zib_get_remote_box(['query' => ['action' => 'allow_view_set_box'], 'loader' => '<div class="flex jc" style="min-height:100px;"><i class="loading-spot"><i></i></i></div>']) . '
+                </div>
+            </div>
+        </div>';
+        }
+
+        //隐藏内容
+        $hide_input = '';
+        if ($user_id && zib_bbs_current_user_can('posts_hide')) {
+            $_args = array(
+                'logged' => __('登录可见', 'zib_language'),
+                'reply'  => __('评论可见', 'zib_language'),
+            );
+
+            if (_pz('pay_user_vip_1_s', true)) {
+                $_args['vip1'] = __('会员可见', 'zib_language');
+            }
+
+            if (zib_bbs_current_user_can('posts_allow_view_pay') || (_pz('points_s') && zib_bbs_current_user_can('posts_allow_view_points'))) {
+                $_args['payshow'] = __('付费可见', 'zib_language');
+            }
+
+            $items = '';
+            foreach ($_args as $key => $value) {
+                $items .= '<span data-for="hide_type" data-value="' . $key . '" class="mb6 mr6 badg p2-10 pointer mi-col-2' . ($key == 'signin' ? ' active' : '') . '">' . $value . '</span>';
+            }
+
+            $hide_input = '<div class="hide-type-drop drop-select dropdown mr20">
+            <div data-target=".hide-type-drop" data-toggle-class="open" class="flex ac jsb drop-btn"><icon class="mr3"><i class="fa fa-eye-slash"></i></icon><span>隐藏内容</span></div>
+            <div class="dropdown-menu fluid dependency-box">
+                <div class="mini-scrollbar padding-10 select-drop-box">
+                <div class="em09 muted-3-color mb10">添加额外的隐藏内容</div>
+                ' . $items . '
+                <input type="hidden" name="hide_type" value="signin">
+                <textarea rows="6" name="hide_content" class="form-control input-textarea" placeholder="在此输入需要隐藏的内容"></textarea>
+                </div>
+            </div>
+        </div>';
+        }
+
+        //已选择的按钮
+        $selected_input = '<div class="quick-selected-tags">
+            <span name="topic" class="flex ac flex1"></span>
+            <span name="tag" class="flex ac flex1"></span>
+        </div>';
+
+        //板块选择按钮
+        $plate_input = '<div class="plate-drop drop-select dropdown mr20 mt10">
+        <div data-target=".plate-drop" data-toggle-class="open" class="flex ac jsb drop-btn">
+            <div class="flex ac jsb but-plate but">
+                <div class="flex ac">
+                    <span  name="plate" class="flex ac"><icon class="mr6">' . zib_get_svg('plate-fill') . '</icon><span>请选择</span>' . $zib_bbs->plate_name . '</span>
+                </div>
+                <i class="ml6 fa fa-angle-right em12"></i>
+            </div>
+        </div>
+        <input type="hidden" name="plate" value="">
+        <div class="dropdown-menu fluid">
+                ' . zib_get_remote_box(['query' => ['action' => 'plate_select_box'], 'loader' => '<div class="flex jc" style="min-height:100px;"><i class="loading-spot"><i></i></i></div>']) . '
+        </div>
+    </div>';
+
+        if (!$user_id) {
+            $plate_input = '<div class="plate-drop drop-select dropdown mr20 mt10 signin-loader">
+        <div class="flex ac jsb drop-btn">
+            <div class="flex ac jsb but-plate but">
+                <div class="flex ac">
+                    <span  name="plate" class="flex ac"><icon class="mr6">' . zib_get_svg('plate-fill') . '</icon><span>请选择</span>' . $zib_bbs->plate_name . '</span>
+                </div>
+                <i class="ml6 fa fa-angle-right em12"></i>
+            </div>
+        </div>
+    </div>';
+
+            $topic_input      = '<div class="flex ac jsb drop-btn mr20 signin-loader"><icon class="mr3">' . zib_get_svg('topic') . '</icon>' . $zib_bbs->topic_name . '</div>';
+            $tag_input        = '<div class="flex ac jsb drop-btn mr20 signin-loader"><icon class="mr3">' . zib_get_svg('tags') . '</icon>' . $zib_bbs->tag_name . '</div>';
+            $allow_view_input = '<div class="flex ac jsb drop-btn mr20 signin-loader"><icon class="mr3">' . zib_get_svg('view', null, '') . '</icon><span name="allow_view">公开</span></div>';
+            $hide_input       = '<div class="flex ac jsb drop-btn mr20 signin-loader"><icon class="mr3"><i class="fa fa-eye-slash"></i></icon><span>隐藏内容</span></div>';
+        }
+
+        //人机验证
+        $verification_input = '';
+        if (_pz('verification_bbspost_s')) {
+            $verification_input = zib_get_machine_verification_input('bbs_post_submit');
+            if (_pz('user_verification_type', 'slider') === 'image') {
+                $verification_input = '<div style="margin-bottom: -14px;">' . $verification_input . '</div>';
+            }
+        }
+
+        $submit_input = '<div class="quick-posts-submit mt10 flex ab">
+        ' . $verification_input . '
+            <botton type="button" tabindex="3" class="but c-green mr6 ' . ($user_id ? 'bbs-posts-submit' : 'signin-loader') . '" action="bbs_posts_draft" name="submit">保存</botton>
+            <botton type="button" tabindex="4" class="but jb-blue ' . ($user_id ? 'bbs-posts-submit' : 'signin-loader') . '" action="bbs_posts_save" name="submit">发布</botton>
+        </div>';
+
+        $submit_input = '<div class="flex ac jsb hh">' . $plate_input . $submit_input . '</div>'; //提交按钮
+
+        $hidden_html = wp_nonce_field('bbs_edit_posts', '_wpnonce', false, false);
+        $hidden_html .= '<input type="hidden" name="is_quick" value="1">';
+        $hidden_html .= '<input type="hidden" name="post_id" value="">';
+
+        $more_input = '<div class="flex ac quick-more-btns hh">' . $topic_input . $tag_input . $allow_view_input . $hide_input . '</div>';
+
+        $html = '<form class="quick-posts-box ' . $args['class'] . '">';
+        $html .= '<div class="quick-input-group mb10">' . $title_input . $content_input . $upload_input . $selected_input . '</div>';
+        $html .= $more_input;
+        $html .= $submit_input;
+        $html .= $hidden_html;
+        $html .= '</form>';
+        return $html;
+    }
+
     //查看权限，阅读限制设置，允许查看
     public static function allow_view_set($id = 0, $class = 'zib-widget mb10-sm mb20')
     {
@@ -260,8 +434,136 @@ class zib_bbs_edit
         return $html;
     }
 
-    public static function plate_allow_view_set_content($id = 0, $class = 'mt20')
+    public static function plate_follow_pay_set_content($plate_id)
     {
+        global $zib_bbs;
+        $in          = zib_bbs_get_plate_follow_pay_options($plate_id);
+        $in_s        = $in['s'];
+        $vip_1_s     = _pz('pay_user_vip_1_s');
+        $vip_2_s     = _pz('pay_user_vip_2_s');
+        $money_icon  = zib_get_svg('money-color-2', null, 'mr6 em12');
+        $points_s    = _pz('points_s');
+        $user_id     = get_current_user_id();
+        $_opt        = _pz('bbs_plate_follow_pay_opt');
+        $vip_input_s = !empty($_opt['vip_price_s']) ? true : false;
+
+        $s_html = '<div class="flex ac jsb padding-h10 border-bottom">
+        <div class="flex ac">付费' . $zib_bbs->plate_follow_name . '</div>
+        <label style="margin: 0;"><input class="hide" name="follow_pay_s" value="1" type="checkbox"' . ($in_s ? ' checked="checked"' : '') . '><div class="form-switch flex0"></div></label>
+    </div>';
+
+        //支付类型
+        $pay_modo_input = '<input type="hidden" name="follow_pay[pay_modo]" value="' . $in['pay_modo'] . '">';
+        if ($points_s) {
+            $pay_modo_input .= '<div class="flex ac jsb padding-h10">
+                <div class="flex ac">支付类型</div>
+                <div class="but-average radius em09">
+                    <span data-for="follow_pay[pay_modo]" data-value="0" class="but p2-10 pointer' . ($in['pay_modo'] !== 'points' ? ' active' : '') . '">现金支付</span>
+                    <span data-for="follow_pay[pay_modo]" data-value="points" class="but p2-10 pointer' . ($in['pay_modo'] === 'points' ? ' active' : '') . '">积分支付</span>
+                </div>
+            </div>';
+        }
+
+        $vip_pay_price_input  = '';
+        $pay_price_limit      = !empty($_opt['price_limit']['price']) ? $_opt['price_limit']['price'] : [];
+        $pay_price_limit_min  = !empty($pay_price_limit['min']) ? $pay_price_limit['min'] : 0;
+        $pay_price_limit_max  = !empty($pay_price_limit['max']) ? $pay_price_limit['max'] : 0;
+        $pay_price_limit_attr = '';
+        if ($pay_price_limit_min) {
+            $pay_price_limit_attr .= ' limit-min="' . $pay_price_limit_min . '" warning-min="最低可设置：1$"';
+        }
+        if ($pay_price_limit_max) {
+            $pay_price_limit_attr .= ' limit-max="' . $pay_price_limit_max . '" warning-max="最高可设置：1$"';
+        }
+        if ($vip_input_s && $vip_1_s) {
+            $vip_pay_price_input .= '<div class="relative mt6">
+        <div class="flex ab">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="follow_pay[vip_1_price]" value="' . $in['vip_1_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <i class="line-form-line"></i>
+        </div>
+    </div>';
+        }
+        if ($vip_input_s && $vip_2_s) {
+            $vip_pay_price_input .= '<div class="relative mt6">
+        <div class="flex ab">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="follow_pay[vip_2_price]" value="' . $in['vip_2_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <i class="line-form-line"></i>
+        </div>
+    </div>';
+        }
+        if ($vip_pay_price_input) {
+            $vip_pay_price_input .= '<div class="px12 mt6 muted-color">会员价不能高于普通价，为0则为会员免费</div>';
+        }
+        //设置金额
+        $pay_price_input = '<div class="mt10" data-controller="follow_pay[pay_modo]" data-condition="!=" data-value="points"' . ($in['pay_modo'] === 'points' ? ' style="display: none;"' : '') . '>
+    <div class="relative">
+        <div class="flex ab">
+            <div class="muted-color mb6 flex0">' . $money_icon . '设置价格</div><input' . $pay_price_limit_attr . ' type="number" name="follow_pay[pay_price]" value="' . $in['pay_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <i class="line-form-line"></i>
+        </div>
+    </div>' . $vip_pay_price_input . '</div>';
+
+        //设置积分
+        $vip_pay_price_input  = '';
+        $pay_price_limit      = !empty($_opt['price_limit']['points']) ? $_opt['price_limit']['points'] : [];
+        $pay_price_limit_min  = !empty($pay_price_limit['min']) ? $pay_price_limit['min'] : 0;
+        $pay_price_limit_max  = !empty($pay_price_limit['max']) ? $pay_price_limit['max'] : 0;
+        $pay_price_limit_attr = '';
+        if ($pay_price_limit_min) {
+            $pay_price_limit_attr .= ' limit-min="' . $pay_price_limit_min . '" warning-min="最低可设置：1$"';
+        }
+        if ($pay_price_limit_max) {
+            $pay_price_limit_attr .= ' limit-max="' . $pay_price_limit_max . '" warning-max="最高可设置：1$"';
+        }
+        if ($vip_input_s && $vip_1_s) {
+            $vip_pay_price_input .= '<div class="relative mt6">
+            <div class="flex ab">
+                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '积分</div><input limit-min="0" ' . $pay_price_limit_attr . ' type="number" name="follow_pay[vip_1_points]" value="' . $in['vip_1_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+                <i class="line-form-line"></i>
+            </div>
+        </div>';
+        }
+        if ($vip_input_s && $vip_2_s) {
+            $vip_pay_price_input .= '<div class="relative mt6">
+            <div class="flex ab">
+                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '积分</div><input limit-min="0" ' . $pay_price_limit_attr . ' min="0" type="number" name="follow_pay[vip_2_points]" value="' . $in['vip_2_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+                <i class="line-form-line"></i>
+            </div>
+        </div>';
+        }
+        if ($vip_pay_price_input) {
+            $vip_pay_price_input .= '<div class="px12 mt6 muted-color">会员价不能高于普通价，为0则为会员免费</div>';
+        }
+        if ($points_s) {
+            $pay_price_input .= '<div class="mt10" data-controller="follow_pay[pay_modo]" data-condition="==" data-value="points"' . ($in['pay_modo'] !== 'points' ? ' style="display: none;"' : '') . '><div class="relative">
+        <div class="flex ab">
+            <div class="muted-color mb6 flex0">' . zib_get_svg('points-color', null, 'mr6 em12') . '设置积分</div><input type="number"' . $pay_price_limit_attr . ' name="follow_pay[points_price]" value="' . $in['points_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <i class="line-form-line"></i>
+        </div>
+    </div>' . $vip_pay_price_input . '</div>';
+        }
+
+        //创作分成,暂未启用
+        $income_desc = '';
+        if (_pz('pay_income_s')) {
+            $income_ratio = zib_bbs_get_user_follow_pay_income_ratio($user_id, $plate_id);
+            if ($income_ratio) {
+                $income_desc .= '<div class="c-blue px12 mt6">您已参与创作分成，此收益将与您分成，您可以进入<a rel="nofollow" target="_blank" class="c-blue-2" href="' . zib_get_user_center_url('income') . '">用户中心-创作分成</a>查看您的分成明细</div>';
+            }
+        }
+
+        $desc = '';
+        $html = '<div class="dependency-box">' . $s_html . '
+                <div data-controller="follow_pay_s" data-condition="!=" data-value=""' . (!$in_s ? ' style="display: none;"' : '') . '>' . $pay_modo_input . $pay_price_input . '</div>
+                <div class="em09 mt10 muted-2-color" data-controller="follow_pay_s" data-condition="==" data-value=""' . ($in_s ? ' style="display: none;"' : '') . '>' . $desc . '</div>
+                <div data-controller="follow_pay_s" data-condition="!=" data-value=""' . (!$in_s ? ' style="display: none;"' : '') . '>' . $income_desc . '</div>
+            </div>';
+        return $html;
+    }
+
+    public static function plate_allow_view_set_content($id = 0, $class = 'mt20', $show_follow_pay = false)
+    {
+        global $zib_bbs;
         $in_type = '';
 
         if ($id) {
@@ -272,7 +574,9 @@ class zib_bbs_edit
             ''       => '公开',
             'signin' => '登录后可查看',
             'roles'  => '部分用户可查看',
+            'follow' => $zib_bbs->plate_follow_name . '此' . $zib_bbs->plate_name . '后可查看',
         );
+
         //选择类型
         $type_html       = '';
         $type_lists_html = '';
@@ -293,6 +597,10 @@ class zib_bbs_edit
         //汇总
         $con = $type_html;
         $con .= $roles_lists ? '<div class="' . $class . '" data-controller="allow_view" data-condition="==" data-value="roles" ' . ('roles' != $in_type ? ' style="display: none;"' : '') . '>' . $roles_lists . '</div>' : '';
+
+        if ($show_follow_pay) {
+            $con .= '<div class="mt20" data-controller="allow_view" data-condition="==" data-value="follow" ' . ('follow' != $in_type ? ' style="display: none;"' : '') . '>' . self::plate_follow_pay_set_content($id) . '</div>';
+        }
 
         return $con;
 
@@ -378,7 +686,7 @@ class zib_bbs_edit
         if ($vip_input_s && $vip_1_s) {
             $vip_pay_price_input .= '<div class="relative mt6">
             <div class="flex ab">
-                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '价格</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_price]" value="' . $in['vip_1_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_price]" value="' . $in['vip_1_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
                 <i class="line-form-line"></i>
             </div>
         </div>';
@@ -386,7 +694,7 @@ class zib_bbs_edit
         if ($vip_input_s && $vip_2_s) {
             $vip_pay_price_input .= '<div class="relative mt6">
             <div class="flex ab">
-                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '价格</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_price]" value="' . $in['vip_2_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+                <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '价格</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_price]" value="' . $in['vip_2_price'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
                 <i class="line-form-line"></i>
             </div>
         </div>';
@@ -439,7 +747,7 @@ class zib_bbs_edit
         if ($vip_input_s && $vip_1_s) {
             $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '积分</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_points]" value="' . $in['vip_1_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(1, 'em12 mr6', false) . _pz('pay_user_vip_1_name') . '积分</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_1_points]" value="' . $in['vip_1_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';
@@ -447,7 +755,7 @@ class zib_bbs_edit
         if ($vip_input_s && $vip_2_s) {
             $vip_pay_price_input .= '<div class="relative mt6">
         <div class="flex ab">
-            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '积分</div><input' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_points]" value="' . $in['vip_2_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
+            <div class="muted-color mb6 flex0">' . zibpay_get_vip_icon(2, 'em12 mr6', false) . _pz('pay_user_vip_2_name') . '积分</div><input limit-min="0"' . $pay_price_limit_attr . ' type="number" name="posts_zibpay[vip_2_points]" value="' . $in['vip_2_points'] . '" style="padding: 0;" class="line-form-input em2x key-color text-right">
             <i class="line-form-line"></i>
         </div>
     </div>';
@@ -1048,6 +1356,7 @@ class zib_bbs_edit
     public static function plate_select_lists_tab($in_plate_id = 0, $class = '', $con_class = '')
     {
 
+        global $zib_bbs;
         $ajax_action = 'plate_select_lists';
         $ajax_url    = admin_url('admin-ajax.php');
 
@@ -1065,7 +1374,7 @@ class zib_bbs_edit
                 'action'  => $ajax_action,
             ),
             array(
-                'name'     => '已关注',
+                'name'     => '已' . $zib_bbs->plate_follow_name,
                 'id'       => 'plate_select_tab_followed',
                 'ajax_url' => add_query_arg(['followed' => 'true'], $ajax_url),
                 'action'   => $ajax_action,
@@ -1509,15 +1818,15 @@ class zib_bbs_edit
         return $html;
     }
 
-    //帖子切换版块
-    public static function add_limit_modal($type, $id)
+    //设置发布权限的模态框
+    public static function add_limit_modal($type, $id, $show_plate_follow_pay = false)
     {
 
         global $zib_bbs;
         $input_type = 'plate_cat' === $type ? 'plate' : 'posts';
         $type_name  = $zib_bbs->plate_name;
 
-        $add_limit_html = zib_bbs_edit::input_add_limit($input_type, $id);
+        $add_limit_html = zib_bbs_edit::input_add_limit($input_type, $id, $show_plate_follow_pay);
         if (!$add_limit_html) {
             return;
         }
@@ -1559,12 +1868,13 @@ class zib_bbs_edit
         $footer .= $hidden_html;
         $footer .= '<button class="but jb-yellow padding-lg wp-ajax-submit"><i class="fa fa-check" aria-hidden="true"></i>确认提交</button>';
         $footer .= '</div>';
+        
         $html = '<form class="bbs-modal-form">';
         $html .= $header;
-        $html .= '<div>';
+        $html .= '<div class="mini-scrollbar scroll-y max-vh5">';
         $html .= $con;
-        $html .= $footer;
         $html .= '</div>';
+        $html .= $footer;
         $html .= '</form>';
 
         return $html;
@@ -1825,8 +2135,15 @@ class zib_bbs_edit
         //查看权限
         $allow_view_set = '';
         if ((!$plate_id && zib_bbs_current_user_can('plate_set_allow_view')) || ($plate_id && zib_bbs_current_user_can('plate_set_allow_view', $plate_id))) {
-            $allow_view_set = zib_bbs_edit::plate_allow_view_set_content($plate_id, 'muted-box padding-10');
+            $allow_view_set = self::plate_allow_view_set_content($plate_id, 'muted-box padding-10');
             $allow_view_set = $allow_view_set ? '<div class="mt20 dependency-box"><div class="em09 muted-2-color mb6">查看权限</div>' . $allow_view_set . '<div class="px12 muted-3-color mb6">为此' . $name . '设置阅读限制，只有满足条件的用户才能查看此版块的' . $zib_bbs->posts_name . '内容</div></div>' : '';
+        }
+
+        //付费关注
+        $follow_pay_set = '';
+        if (zib_bbs_current_user_can('plate_set_follow_pay', $plate_id)) {
+            $follow_pay_set = self::plate_follow_pay_set_content($plate_id);
+            $follow_pay_set = $follow_pay_set ? '<div class="mt20"><div class="em09 muted-2-color mb6">付费' . $zib_bbs->plate_follow_name . '</div><div class="muted-box padding-h6">' . $follow_pay_set . '<div class="px12 muted-2-color mb6 mt6">启用付费' . $zib_bbs->plate_follow_name . '后，请在发布权限、查看权限配置中选择【' . $zib_bbs->plate_follow_name . $zib_bbs->plate_name . '】选项</div></div></div>' : '';
         }
 
         $con = '';
@@ -1840,6 +2157,7 @@ class zib_bbs_edit
         $con .= $type_html;
         $con .= $add_limit_html;
         $con .= $allow_view_set;
+        $con .= $follow_pay_set;
         $con .= $moderator_html;
 
         //头部标题
@@ -1862,14 +2180,15 @@ class zib_bbs_edit
         return $html;
     }
 
-    public static function input_add_limit($type = 'posts', $id = 0)
+    //发布限制选项
+    public static function input_add_limit($type = 'posts', $id = 0, $show_plate_follow_pay = false)
     {
         $options = zib_bbs_get_add_limit_options($type);
         $input   = '';
         $desc    = '';
         $in      = 0;
         if ($id) {
-            $in = 'posts' === $type ? (int) get_post_meta($id, 'add_limit', true) : (int) get_term_meta($id, 'add_limit', true);
+            $in = 'posts' === $type ? get_post_meta($id, 'add_limit', true) : get_term_meta($id, 'add_limit', true);
         }
         if ($options) {
             global $zib_bbs;
@@ -1883,6 +2202,16 @@ class zib_bbs_edit
                 $input .= '<label class="badg p2-10 mr10 pointer"><input type="radio"' . (checked($in, $key, false)) . ' name="add_limit" value="' . $key . '"> ' . $name . '</label>';
             }
         }
+
+        //如果是板块，添加关注后可发帖的选项
+        if ('posts' === $type) {
+            $input .= '<label class="badg p2-10 mr10 pointer"><input type="radio"' . (checked($in, 'follow', false)) . ' name="add_limit" value="follow"> ' . $zib_bbs->plate_follow_name . $zib_bbs->plate_name . '</label>';
+            $desc .= '<div class="muted-2-color" data-controller="add_limit" data-condition="==" data-value="follow"' . ($in == 'follow' ? '' : ' style="display: none;"') . ' >' . $zib_bbs->plate_follow_name . $zib_bbs->plate_name . '后可发布' . $zib_bbs->posts_name . '</div>';
+            if ($show_plate_follow_pay) {
+                $desc .= '<div class="mt10" data-controller="add_limit" data-condition="==" data-value="follow" ' . ('follow' != $in ? ' style="display: none;"' : '') . '>' . self::plate_follow_pay_set_content($id) . '</div>';
+            }
+        }
+
         if (!$input) {
             return;
         }

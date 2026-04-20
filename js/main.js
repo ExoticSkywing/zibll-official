@@ -2,7 +2,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:40
- * @LastEditTime : 2026-01-31 16:42:49
+ * @LastEditTime : 2026-03-16 19:19:17
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -1741,22 +1741,22 @@ function post_ajax(_this, con, jcon, item, loader, pag, next, trigger, replace, 
                 a = $.parseHTML('<div>' + a + '</div>');
                 $item = $con.find(item);
                 var $a = $(a);
-                var $jcon = $a.find(jcon);
-
-                var c_c = $jcon.find(item); //列表
-                var c_p = $jcon.find(pag); //下一页
-                var n_h = c_p.find(next).attr('href') || c_p.find(next).find('a').attr('href'); //下一页链接
-                c_p = c_p.length ? c_p : '<div class="text-center mb20 padding-h10 muted-2-color no-more separator">' + nomore + '</div>'; //是否还有下一页
-                c_p = $jcon.find('.noajax-pag').length ? $jcon.find('.noajax-pag') : c_p;
-
                 //全页面全局替换
                 $a.find('[win-ajax-replace]').each(function () {
                     var replace_key = $(this).attr('win-ajax-replace');
                     var replace_e = $('[win-ajax-replace="' + replace_key + '"]');
                     if (replace_e.length) {
                         replace_e.html($(this).html());
+                        $(this).remove();
                     }
                 });
+
+                var $jcon = $a.find(jcon);
+                var c_c = $jcon.find(item); //列表
+                var c_p = $jcon.find(pag); //下一页
+                var n_h = c_p.find(next).attr('href') || c_p.find(next).find('a').attr('href'); //下一页链接
+                c_p = c_p.length ? c_p : '<div class="text-center mb20 padding-h10 muted-2-color no-more separator">' + nomore + '</div>'; //是否还有下一页
+                c_p = $jcon.find('.noajax-pag').length ? $jcon.find('.noajax-pag') : c_p;
 
                 //头部保留
                 if (trigger) {
@@ -2926,6 +2926,26 @@ _win.bd.on('click', '[ajax-action]', function () {
                 }
             } else {
                 n = n.data;
+                if (n.show_modal && n.modal) {
+                    //显示模态框
+                    var modal_config = {
+                        class: 'modal-mini full-sm',
+                        height: 330,
+                        mobile_from_bottom: true,
+                        touch_close: true,
+                        content: n.modal,
+                    };
+
+                    if (n.modal_config) {
+                        modal_config = $.extend(modal_config, n.modal_config);
+                    }
+
+                    modal_config.content = n.modal;
+                    refresh_modal(modal_config);
+                    _text.html(_this_html);
+                    return;
+                }
+
                 $('[ajax-action="' + action + '"][data-id="' + id + '"]').each(function () {
                     var _this = $(this);
                     var _text = _this.find('text');

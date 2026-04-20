@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime: 2024-10-11 14:36:22
+ * @LastEditTime : 2026-03-16 19:14:25
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|首页函数
@@ -58,6 +58,25 @@ function zib_bbs_get_home_tab_content($tabs_options)
 
     return zib_bbs_get_tab_nav('content', $tabs_options, 'home', _pz('bbs_home_tab_swiper', true), _pz('bbs_home_tab_active_index', 1));
 }
+
+function zib_bbs_get_home_tab_content_quick_posts($html = '')
+{
+    $page = zib_get_the_paged();
+    //快速发布
+    if (1 == $page && _pz('bbs_home_tab_quick_posts_s', true)) {
+        $show_index = _pz('bbs_home_tab_quick_posts_tab', 2);
+        $index      = !empty($_GET['index']) ? (int) $_GET['index'] : _pz('bbs_home_tab_active_index', 1);
+        if ($show_index == $index) {
+            $quick_publish_args = array(
+                'class' => 'ajax-item-header zib-widget',
+            );
+            $html = zib_bbs_edit::quick_posts($quick_publish_args) . $html;
+        }
+    }
+
+    return $html;
+}
+add_filter('bbs_home_tab_content', 'zib_bbs_get_home_tab_content_quick_posts', 10);
 
 function zib_bbs_get_home_tab_content_pending($html = '', $option = array())
 {
@@ -408,13 +427,14 @@ add_filter('bbs_home_tab_content_follow', 'zib_bbs_get_home_tab_content_follow_t
 //首页关注的tab
 function zib_bbs_get_home_tab_content_follow($html = '', $option = array())
 {
+    global $zib_bbs;
     $page    = zib_get_the_paged();
     $orderby = !empty($option['orderby']) ? $option['orderby'] : 'date';
     $style   = !empty($option['style']) ? $option['style'] : 'detail';
     $user_id = get_current_user_id();
 
     if (!$user_id) {
-        $html .= zib_get_null('登录后查看我的关注', 20, 'null-user.svg', '', 0, 220) . zib_get_user_singin_page_box('mb20', '');
+        $html .= zib_get_null('登录后继续查看', 20, 'null-user.svg', '', 0, 220) . zib_get_user_singin_page_box('mb20', '');
         return zib_get_ajax_ajaxpager_one_centent($html);
     }
 
@@ -449,7 +469,7 @@ function zib_bbs_get_home_tab_content_follow($html = '', $option = array())
         }
     }
     if (!$lists) {
-        $lists = zib_get_ajax_null('暂无关注内容', 60, 'null-love.svg');
+        $lists = zib_get_ajax_null('暂无内容', 60, 'null-love.svg');
         if (1 == $page) {
 
         }

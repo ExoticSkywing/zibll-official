@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-07 23:27:50
+ * @LastEditTime : 2026-03-14 16:13:45
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|初始化函数
@@ -25,6 +25,7 @@ class zib_bbs
     public $plate_name              = '';
     public $topic_name              = '';
     public $tag_name                = '';
+    public $plate_follow_name       = '';
     public $plate_moderator_name    = '';
     public $plate_author_name       = '';
     public $cat_moderator_name      = '';
@@ -65,6 +66,7 @@ class zib_bbs
         $instance->plate_moderator_name = _pz('bbs_plate_moderator_name', '版主') ?: '版主';
         $instance->plate_author_name    = _pz('bbs_plate_author_name', '超级版主') ?: '超级版主';
         $instance->cat_moderator_name   = _pz('bbs_cat_moderator_name', '分区版主') ?: '分区版主';
+        $instance->plate_follow_name    = _pz('bbs_plate_follow_name', '关注') ?: '关注';
 
         //其他参数
         $instance->exclude_search_posts = _pz('bbs_exclude_search_posts', true);
@@ -850,7 +852,7 @@ class zib_bbs
 
         $columns['moderator'] = $this->plate_moderator_name;
 
-        $columns['all_count'] = '<a href="' . add_query_arg(array('orderby' => 'posts_count', 'order' => $order)) . '"><span>' . $this->posts_name . ($order_by == 'posts_count' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'views', 'order' => $order)) . '"><span>阅读' . ($order_by == 'views' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'follow_count', 'order' => $order)) . '"><span>关注' . ($order_by == 'follow_count' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'reply_count', 'order' => $order)) . '"><span>' . $this->comment_name . ($order_by == 'reply_count' ? $o_icon : '') . '</span>';
+        $columns['all_count'] = '<a href="' . add_query_arg(array('orderby' => 'posts_count', 'order' => $order)) . '"><span>' . $this->posts_name . ($order_by == 'posts_count' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'views', 'order' => $order)) . '"><span>阅读' . ($order_by == 'views' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'follow_count', 'order' => $order)) . '"><span>' . $this->plate_follow_name . ($order_by == 'follow_count' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'reply_count', 'order' => $order)) . '"><span>' . $this->comment_name . ($order_by == 'reply_count' ? $o_icon : '') . '</span>';
 
         $columns['last_time'] = '<a href="' . add_query_arg(array('orderby' => 'last_post', 'order' => $order)) . '"><span>最后发布' . ($order_by == 'last_post' ? $o_icon : '') . '</span></a> · <a href="' . add_query_arg(array('orderby' => 'last_reply', 'order' => $order)) . '"><span>最后' . $this->comment_name . ($order_by == 'last_reply' ? $o_icon : '') . '</span></a>';
 
@@ -881,7 +883,7 @@ class zib_bbs
                 break;
 
             case 'all_count':
-                echo '<div style="font-size: 12px;">' . $this->posts_name . zib_bbs_get_plate_posts_count($plate_id) . ' · 热度' . zib_bbs_get_plate_views_cut_count($plate_id) . ' · 关注' . zib_bbs_get_plate_follow_cut_count($plate_id) . ' · ' . $this->comment_name . zib_bbs_get_plate_reply_cut_count($plate_id) . '</div>';
+                echo '<div style="font-size: 12px;">' . $this->posts_name . zib_bbs_get_plate_posts_count($plate_id) . ' · 热度' . zib_bbs_get_plate_views_cut_count($plate_id) . ' · ' . $this->plate_follow_name . zib_bbs_get_plate_follow_cut_count($plate_id) . ' · ' . $this->comment_name . zib_bbs_get_plate_reply_cut_count($plate_id) . '</div>';
                 break;
             case 'last_time':
 
@@ -958,7 +960,7 @@ class zib_bbs
 
                 $html = '';
                 $html .= '<div>' . $title . $trash . '</div>';
-                $html .= '<div style="font-size: 12px;opacity: .8;">' . $this->posts_name . zib_bbs_get_plate_posts_count($plate_id) . ' · 热度' . $views_count . ' · 关注' . $follow_count . ' · ' . $this->comment_name . $reply_count . '</div>';
+                $html .= '<div style="font-size: 12px;opacity: .8;">' . $this->posts_name . zib_bbs_get_plate_posts_count($plate_id) . ' · 热度' . $views_count . ' · ' . $this->plate_follow_name . $follow_count . ' · ' . $this->comment_name . $reply_count . '</div>';
                 $html .= '<div class="row-actions"><span class="view"><a href="' . $permalink . '">查看</a></span> | <span class="view"><a href="' . $edit . '">编辑</a></span></div>';
                 $html .= '';
                 $html .= '';

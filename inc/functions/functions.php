@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:37
- * @LastEditTime : 2025-12-28 22:01:13
+ * @LastEditTime : 2026-03-12 12:25:38
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -339,6 +339,8 @@ function zib_new_slider($args, $echo = true)
             $s_attr = ' data-opacity="0.2"';
         }
 
+        $s_attr .= isset($slide['attr']) ? ' ' . $slide['attr'] : '';
+
         $slides .= '<div class="swiper-slide' . ' ' . $s_class . '"' . $s_attr . '>';
         $slides .= $blur_background;
         $slides .= $s_href ? '<a' . $s_blank . ' href="' . $s_href . '">' : '<span>';
@@ -528,7 +530,7 @@ function zib_posts_prevnext()
         $next_title = '无更多文章';
         $next_link  = 'href="javascript:;"';
     endif;
-?>
+    ?>
     <div class="theme-box" style="height:99px">
         <nav class="article-nav">
             <div class="main-bg box-body radius8 main-shadow">
@@ -1031,7 +1033,7 @@ function zib_modal($args = array())
     }
     //按钮平均分布
 
-?>
+    ?>
     <div class="modal fade" id="<?php echo $args['id']; ?>" tabindex="-1" role="dialog">
         <div class="modal-dialog                                                                                                                                                                         <?php echo $args['class']; ?>"
             <?php echo 'style="' . $args['style'] . '"'; ?> role="document">
@@ -1040,8 +1042,8 @@ function zib_modal($args = array())
                     <?php echo $close_btn . $title . $content; ?>
                 </div>
                 <?php if ($buttons) {
-                    echo '<div class="' . $button_box_class . '">' . implode($buttons) . '</div>';
-                } ?>
+        echo '<div class="' . $button_box_class . '">' . implode($buttons) . '</div>';
+    }?>
             </div>
         </div>
     </div>
@@ -2534,29 +2536,29 @@ function zibpay_admin_pagenavi($total_count, $number_per_page = 15)
         $next_page_url = '#';
         $last_page_url = '#';
     }
-?>
+    ?>
     <div class="tablenav bottom">
         <div class="tablenav-pages">
             <span class="displaying-num">每页 <?php echo $number_per_page; ?> 共<?php echo $total_count; ?></span>
             <span class="pagination-links">
                 <a class="first-page button                                                                                                                                                                                                                                           <?php if (1 == $current_page) {
-                                                                                                                                                                                                                                                                                            echo 'disabled';
-                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                        ?>" title="前往第一页" href="<?php echo $first_page_url; ?>">«</a>
+        echo 'disabled';
+    }
+    ?>" title="前往第一页" href="<?php echo $first_page_url; ?>">«</a>
                 <a class="prev-page button                                                                                                                                                                                                                                     <?php if (1 == $current_page) {
-                                                                                                                                                                                                                                                                                    echo 'disabled';
-                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                ?>" title="前往上一页" href="<?php echo $prev_page_url; ?>">‹</a>
+        echo 'disabled';
+    }
+    ?>" title="前往上一页" href="<?php echo $prev_page_url; ?>">‹</a>
                 <span class="paging-input">第 <?php echo $current_page; ?> 页，共 <span
                         class="total-pages"><?php echo $total_pages; ?></span> 页</span>
                 <a class="next-page button                                                                                                                                                                                                                                     <?php if ($current_page == $total_pages) {
-                                                                                                                                                                                                                                                                                    echo 'disabled';
-                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                ?>" title="前往下一页" href="<?php echo $next_page_url; ?>">›</a>
+        echo 'disabled';
+    }
+    ?>" title="前往下一页" href="<?php echo $next_page_url; ?>">›</a>
                 <a class="last-page button                                                                                                                                                                                                                                     <?php if ($current_page == $total_pages) {
-                                                                                                                                                                                                                                                                                    echo 'disabled';
-                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                ?>" title="前往最后一页" href="<?php echo $last_page_url; ?>">»</a>
+        echo 'disabled';
+    }
+    ?>" title="前往最后一页" href="<?php echo $last_page_url; ?>">»</a>
             </span>
         </div>
         <br class="clear">
@@ -2852,13 +2854,13 @@ function zib_die_page($message = '', $args = array())
     }
 
     get_header();
-?>
+    ?>
     <main class="container flex ac">
         <div class="f404 flex1">
             <?php echo $img . '<div class="f404-msg mt20">' . $message . '</div>'; ?>
         </div>
     </main>
 <?php
-    get_footer();
+get_footer();
     exit;
 }

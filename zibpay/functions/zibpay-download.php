@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:50
- * @LastEditTime : 2025-11-25 19:55:08
+ * @LastEditTime : 2026-03-30 19:02:51
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -390,8 +390,11 @@ function zibpay_get_post_down_buts($pay_mate, $paid_type = 'pay', $post_id = '')
 
         if ($download_limit) {
             $surplus = $download_limit - $user_down_number; //计算剩余下载次数
-            if ($surplus < 1) {
-                $down_but = '<div class=""><span class="badg c-red btn-block">您今日下载免费资源个数已超限，请明日再下载</span></div>';
+            if ($surplus <= 0) {
+                $is_allow_buy = !empty($pay_mate['download_limit_over_price']) && (float) $pay_mate['download_limit_over_price'] > 0;
+
+                $down_but = '<div class=""><span class="badg c-red btn-block">您今日下载免费资源个数已超限，请明日再下载' . ($is_allow_buy ? '或购买此商品' : '') . '</span></div>';
+                $down_but .= $is_allow_buy ? zibpay_get_post_cashier_link($post_id, 'but jb-red mt20', '立即购买', array('price_type' => 'download_limit_over')) : '';
             } else {
                 $_text    = $user_vip_level ? '您是尊贵的' . _pz('pay_user_vip_' . $user_vip_level . '_name') . '，' : '您';
                 $down_but = '<div class=""><span class="badg c-red btn-block">' . $_text . '今日还可下载' . $surplus . '个免费资源</span></div>' . $down_but;

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-28 21:49:12
+ * @LastEditTime : 2026-03-14 15:47:14
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|用户中心显示函数
@@ -143,17 +143,17 @@ function zib_bbs_get_author_filter($type = 'plate', $orderby = 'date', $status =
         'posts_count'  => '最多' . $zib_bbs->posts_name,
         'reply_count'  => '最多回复',
         'views'        => '最高热度',
-        'follow_count' => '最多关注',
+        'follow_count' => '最多' . $zib_bbs->plate_follow_name,
     );
 
     $orderby_array['forum_post'] = array(
-        'date'            => '最新发布',
-        'modified'        => '最近更新',
-        'last_reply'      => '最新回复',
-        'views'           => '最多查看',
-        'score'           => '最高评分',
-        'comment_count'   => '最多回复',
-        'favorite_count'  => '最多收藏',
+        'date'           => '最新发布',
+        'modified'       => '最近更新',
+        'last_reply'     => '最新回复',
+        'views'          => '最多查看',
+        'score'          => '最高评分',
+        'comment_count'  => '最多回复',
+        'favorite_count' => '最多收藏',
     );
 
     $orderby_array['favorite'] = array(
@@ -175,7 +175,7 @@ function zib_bbs_get_author_filter($type = 'plate', $orderby = 'date', $status =
         $status_array = array(
             'publish'   => '创建' . '<count class="ml3 em09">' . $this_count . '</count>',
             'moderator' => '管理' . '<count class="ml3 em09">' . zib_bbs_get_user_moderator_plate_count($author_id) . '</count>',
-            'follow'    => '关注' . '<count class="ml3 em09">' . $follow_count . '</count>',
+            'follow'    => '已' . $zib_bbs->plate_follow_name . '<count class="ml3 em09">' . $follow_count . '</count>',
         );
     } elseif ('favorite' === $type) {
         $favorite_count      = zib_bbs_get_user_favorite_posts_count($author_id);

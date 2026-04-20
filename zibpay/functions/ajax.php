@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-10-29 19:22:40
- * @LastEditTime: 2025-10-23 00:11:22
+ * @LastEditTime : 2026-03-14 23:25:11
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -14,8 +14,55 @@
 //收银台
 function zibpay_ajax_pay_cashier_modal()
 {
-    $id     = !empty($_REQUEST['id']) ? (int) $_REQUEST['id'] : 0;
-    $_modal = zibpay_pay_cashier_modal($id);
+    $id         = !empty($_REQUEST['id']) ? (int) $_REQUEST['id'] : 0;
+    $price_type = !empty($_REQUEST['price_type']) ? $_REQUEST['price_type'] : '';
+    //判断文章是否存在
+    $post = get_post($id);
+    if (!$post) {
+        zib_ajax_notice_modal('danger', '内容不存在或参数错误');
+    }
+
+    $user_id  = get_current_user_id();
+    $pay_mate = get_post_meta($id, 'posts_zibpay', true);
+    if (empty($pay_mate['pay_type']) || 'no' == $pay_mate['pay_type']) {
+        zib_ajax_notice_modal('danger', '当前内容未设置付费，或参数错误');
+    }
+
+    $is_points = zibpay_post_is_points_modo($pay_mate);
+    if ($is_points && !$user_id) {
+        zib_ajax_notice_modal('danger', '请先登录');
+    }
+
+    //判断购买限制
+    $pay_limit = !empty($pay_mate['pay_limit']) ? (int) $pay_mate['pay_limit'] : '0';
+    if ($pay_limit > 0 && !$user_id) {
+        zib_ajax_notice_modal('danger', '请先登录');
+    }
+
+    //购买权限
+    if ($pay_limit > 0 && (_pz('pay_user_vip_1_s', true) || _pz('pay_user_vip_2_s', true))) {
+        if (!$user_id) {
+            zib_ajax_notice_modal('danger', '请先登录');
+        }
+
+        $vip_icon = zib_get_svg('vip_' . $pay_limit, '0 0 1024 1024', 'mr3');
+        //开始限制购买权限
+        $user_vip_level = zib_get_user_vip_level($user_id);
+
+        if (!$user_vip_level) {
+            $pay_vip_text = '开通会员';
+        } elseif ($user_vip_level < $pay_limit) {
+            $pay_vip_text = '升级' . _pz('pay_user_vip_' . $pay_limit . '_name');
+        }
+
+        if (!$user_vip_level || $user_vip_level < $pay_limit) {
+            $pay_button = '<div class="mb20 em09"><span class="badg c-yellow em09"><i class="fa fa-fw fa-info-circle fa-fw mr6" aria-hidden="true"></i>您暂无购买权限，请先' . $pay_vip_text . '</span></div>';
+            $pay_button .= '<a href="javascript:;" vip-level="' . $pay_limit . '" class="em09 but btn-block jb-vip' . $pay_limit . ($user_id ? ' pay-vip' : ' signin-loader') . ' padding-lg">' . $vip_icon . $pay_vip_text . '</a>';
+            zib_ajax_notice_modal('warning', $pay_button);
+        }
+    }
+
+    $_modal = $is_points ? zibpay_pay_points_cashier_modal($id, $price_type) : zibpay_pay_cashier_modal($id, $price_type);
     if (!$_modal) {
         zib_ajax_notice_modal('danger', '参数异常');
     }
@@ -24,24 +71,6 @@ function zibpay_ajax_pay_cashier_modal()
 }
 add_action('wp_ajax_pay_cashier_modal', 'zibpay_ajax_pay_cashier_modal');
 add_action('wp_ajax_nopriv_pay_cashier_modal', 'zibpay_ajax_pay_cashier_modal');
-
-//积分收银台
-function zibpay_ajax_pay_points_cashier_modal()
-{
-    $id      = !empty($_REQUEST['id']) ? (int) $_REQUEST['id'] : 0;
-    $user_id = get_current_user_id();
-    if (!$user_id) {
-        zib_ajax_notice_modal('danger', '请先登录');
-    }
-
-    $_modal = zibpay_pay_points_cashier_modal($id);
-    if (!$_modal) {
-        zib_ajax_notice_modal('danger', '参数异常');
-    }
-    echo $_modal;
-    exit;
-}
-add_action('wp_ajax_pay_points_cashier_modal', 'zibpay_ajax_pay_points_cashier_modal');
 
 //用户订单列表
 function zibpay_ajax_user_order()
@@ -953,7 +982,7 @@ function zibpay_get_order_pay_modal_content(array $payment_data, $return_url = n
             $points_user_url = zib_get_user_center_url('balance');
 
             $form = '';
-            $form .= '<div class="badg c-red btn-block mb20">抱歉，您的积分不足，暂时无法购买</div>';
+            $form .= '<div class="badg c-red btn-block mb20">抱歉，您的积分不足，暂时无法支付</div>';
             $form .= '<div class="modal-buts but-average"><a rel="nofollow" type="button" class="but padding-lg" href="' . $points_user_url . '">我的积分</a>' . $points_pay_link . '</div>';
         }
 
@@ -967,7 +996,7 @@ function zibpay_get_order_pay_modal_content(array $payment_data, $return_url = n
     }
 
     if ($time_remaining) {
-        $time_remaining  = zib_time_to_c($time_remaining);
+        $time_remaining = zib_time_to_c($time_remaining);
         $time_remaining = '<span class="ml6 c-yellow px12 badg badg-sm" int-second="1" data-over-text="交易已关闭" data-countdown="' . $time_remaining . '"></span>';
     }
 

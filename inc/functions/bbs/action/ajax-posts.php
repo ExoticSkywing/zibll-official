@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-11-09 13:59:52
- * @LastEditTime : 2026-01-29 15:36:21
+ * @LastEditTime : 2026-03-16 21:35:38
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|AJAX执行类函数
@@ -11,11 +11,11 @@
  * @Remind        : 使用盗版主题会存在各种未知风险。支持正版，从我做起！
  */
 
-//关注、收藏、评分
-
-function zib_bbs_ajax_follow_plate()
+//帖子评分
+function zib_bbs_ajax_posts_score()
 {
 
+    global $zib_bbs;
     $id     = !empty($_REQUEST['id']) ? $_REQUEST['id'] : 0;
     $action = !empty($_REQUEST['action']) ? $_REQUEST['action'] : 0;
 
@@ -89,55 +89,14 @@ function zib_bbs_ajax_follow_plate()
 
             break;
         case 'follow_plate':
-            $is_follow          = zib_get_user_meta($user_id, 'follow_plate', true);
-            $plate_follow_count = (int) get_post_meta($id, 'follow_count', true);
 
-            $is_follow = $is_follow ? $is_follow : array();
-            if (in_array($id, $is_follow)) {
-                //取消关注
-                $index = array_search($id, $is_follow);
-                unset($is_follow[$index]);
-
-                $new_count = $plate_follow_count - 1;
-                $type      = 'cancel';
-                $active    = false;
-                $text      = '关注';
-            } else {
-                //关注
-                $type   = 'add';
-                $text   = '已关注';
-                $active = true;
-
-                $is_follow[] = $id;
-                $new_count   = $plate_follow_count + 1;
-            }
-            $new_count = $new_count < 0 ? 0 : $new_count;
-            $is_follow = array_values($is_follow);
-
-            zib_update_user_meta($user_id, 'follow_plate', $is_follow);
-
-            update_post_meta($id, 'follow_count', $new_count);
-
-            wp_cache_set($user_id, $is_follow, 'bbs_user_follow_plate');
-
-            do_action('bbs_follow_plate', $id, $user_id); //添加挂钩
-            wp_send_json_success([
-                'type'         => $type,
-                'id'           => $id,
-                'new_count'    => $new_count,
-                'follow_plate' => $is_follow,
-                'active'       => $active,
-                'text'         => $text,
-            ]);
             break;
     }
 }
-add_action('wp_ajax_follow_plate', 'zib_bbs_ajax_follow_plate');
-add_action('wp_ajax_nopriv_follow_plate', 'zib_bbs_ajax_follow_plate');
-add_action('wp_ajax_score_extra', 'zib_bbs_ajax_follow_plate');
-add_action('wp_ajax_nopriv_score_extra', 'zib_bbs_ajax_follow_plate');
-add_action('wp_ajax_score_deduct', 'zib_bbs_ajax_follow_plate');
-add_action('wp_ajax_nopriv_score_deduct', 'zib_bbs_ajax_follow_plate');
+add_action('wp_ajax_score_extra', 'zib_bbs_ajax_posts_score');
+add_action('wp_ajax_nopriv_score_extra', 'zib_bbs_ajax_posts_score');
+add_action('wp_ajax_score_deduct', 'zib_bbs_ajax_posts_score');
+add_action('wp_ajax_nopriv_score_deduct', 'zib_bbs_ajax_posts_score');
 
 //收藏帖子
 function zib_bbs_ajax_favorite_posts()
@@ -635,8 +594,15 @@ add_action('wp_ajax_nopriv_score_user_lists', 'zib_bbs_ajax_score_user_lists');
 //保存帖子
 function zib_bbs_ajax_edit_posts()
 {
+
     global $zib_bbs;
-    $cuid         = get_current_user_id();
+    $cuid = get_current_user_id();
+
+    //判断登录
+    if (!$cuid) {
+        zib_send_json_error(['msg' => '请先登录', 'code' => 'no_logged']);
+    }
+
     $action       = !empty($_REQUEST['action']) ? $_REQUEST['action'] : 'bbs_posts_save';
     $post_id      = !empty($_REQUEST['post_id']) ? (int) $_REQUEST['post_id'] : 0;
     $is_new       = !$post_id;
@@ -714,6 +680,36 @@ function zib_bbs_ajax_edit_posts()
                 $is_audit = true;
             }
         }
+    }
+    //如果是快速发布
+    if (!empty($_REQUEST['is_quick'])) {
+        if (!empty($_REQUEST['images']) && is_array($_REQUEST['images'])) {
+            foreach ($_REQUEST['images'] as $image_data) {
+                $image_data = @json_decode(wp_unslash($image_data), true);
+                if (!empty($image_data['src'])) {
+                    $post_content .= '<p><img src="' . esc_url($image_data['src']) . '" alt="' . esc_attr($image_data['alt'] ?? '') . '"' . (!empty($image_data['id']) ? ' data-edit-file-id="' . ((int) $image_data['id']) . '"' : '') . (!empty($image_data['full']) ? ' data-full-url="' . esc_url($image_data['full']) . '"' : '') . '></p>';
+                }
+            }
+        }
+
+        $hide_content = !empty($_REQUEST['hide_content']) ? $_REQUEST['hide_content'] : '';
+        if ($hide_content) {
+            $hide_type = !empty($_REQUEST['hide_type']) ? trim(strip_tags($_REQUEST['hide_type'])) : 'signin';
+
+            $type_desc = array(
+                'logged'  => '登录可见',
+                'reply'   => '评论可见',
+                'vip1'    => '会员可见',
+                'payshow' => '付费可见',
+            );
+
+            if (!isset($type_desc[$hide_type])) {
+                $hide_type = 'signin';
+            }
+
+            $post_content = '<div class="tinymce-hide" contenteditable="false"><p class="hide-before">[hidecontent type="' . $hide_type . '" desc="隐藏内容：' . $type_desc[$hide_type] . '"]</p><div contenteditable="true">' . $hide_content . '</div><p class="hide-after">[/hidecontent]</p></div>';
+        }
+
     }
 
     //发布状态判断
@@ -826,6 +822,8 @@ function zib_bbs_ajax_edit_posts()
 }
 add_action('wp_ajax_bbs_posts_draft', 'zib_bbs_ajax_edit_posts');
 add_action('wp_ajax_bbs_posts_save', 'zib_bbs_ajax_edit_posts');
+add_action('wp_ajax_nopriv_bbs_posts_draft', 'zib_bbs_ajax_edit_posts');
+add_action('wp_ajax_nopriv_bbs_posts_save', 'zib_bbs_ajax_edit_posts');
 
 //有新的用户发帖待审核，给管理员发消息
 function zib_bbs_add_posts_pending_msg($post)

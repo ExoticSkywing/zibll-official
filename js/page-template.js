@@ -2,7 +2,7 @@
  * @Author: Qinver
  * @Url: zibll.com
  * @Date: 2021-06-09 16:35:09
- * @LastEditTime : 2025-06-17 18:45:43
+ * @LastEditTime : 2026-03-14 15:30:52
  */
 
 //文档导航页面
@@ -108,7 +108,7 @@ _win.bd.on('click', '.new-posts-submit', function () {
         n.ok && $('.form-control').val('');
         n.singin && $('.signin-loader:first').click();
         n.posts_id && form.find('input[name="posts_id"]').val(n.posts_id);
-
+        window.post_is_save = true;
         if (n.open_url) {
             window.location.href = n.open_url;
             window.location.reload;

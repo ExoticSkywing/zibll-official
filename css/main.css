@@ -7157,6 +7157,14 @@ body.modal-open .float-btn.wait-pay-btn .hover-show-con {
 }
 
 /*----搜索页面-----搜索页面-----搜索页面-----搜索页面-----搜索页面-----搜索页面----*/
+.search-close-box {
+    max-width: 660px;
+    margin: auto;
+}
+
+.search-close-box > .but {
+    float: right;
+}
 .search-input {
     max-width: 600px;
     margin: auto;
@@ -8432,6 +8440,18 @@ img.alignleft {
     position: absolute;
 }
 
+.page-cover-more-btns {
+    position: absolute;
+    right: 5px;
+    top: 0px;
+    z-index: 1;
+    font-size: 1.2em;
+}
+
+.page-cover-more-btns > * {
+    padding: 10px;
+}
+
 .page-cover .page-desc {
     opacity: 0.8;
     word-break: break-word;
@@ -8625,7 +8645,7 @@ img.alignleft {
     cursor: pointer;
 }
 
-.withdraw-amount-box{
+.withdraw-amount-box {
     min-height: 66px;
 }
 
@@ -9824,6 +9844,8 @@ body.error404 {
     .fixed-wrap .tab-nav-theme.mini-scrollbar > li.active > a {
         color: var(--focus-color);
         font-weight: 500;
+        background: var(--focus-color-opacity05);
+        border-radius: 8px;
     }
 
     .fixed-wrap .tab-nav-theme.mini-scrollbar > li::before {

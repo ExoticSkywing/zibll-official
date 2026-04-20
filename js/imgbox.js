@@ -2,7 +2,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:40
- * @LastEditTime : 2025-11-29 17:52:56
+ * @LastEditTime : 2026-03-12 19:26:05
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -26,7 +26,6 @@
         full: true,
         exclude: '.no-imgbox,.avatar,.img-icon,.avatar-badge,.smilie-icon', //排除
     };
-
 
     Miniimgbox.swiper = '';
     Miniimgbox.thumbs_swiper = '';
@@ -182,7 +181,9 @@
                 if (!is_no(_this) && !_this.find('img').length) {
                     data.slide = get_slide(_this);
                     data.length = index;
-                    _this.data(data_key, data);
+                    if (!_this.attr('imgbox-no-cache')) {
+                        _this.data(data_key, data);
+                    }
                 }
             }
 

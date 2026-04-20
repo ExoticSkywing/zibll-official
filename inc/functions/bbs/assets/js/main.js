@@ -2,7 +2,7 @@
  * @Author: Qinver
  * @Url: zibll.com
  * @Date: 2021-08-11 16:08:49
- * @LastEditTime: 2025-09-28 22:18:09
+ * @LastEditTime : 2026-03-16 21:01:20
  */
 
 (function () {
@@ -15,8 +15,17 @@
             form = _this.parents('form'),
             data = form.serializeObject();
         data.action = type;
-        if (tinyMCE) {
-            data.post_content = tinyMCE.activeEditor.getContent();
+        if (window.tinyMCE && window.tinyMCE.activeEditor) {
+            data.post_content = window.tinyMCE.activeEditor.getContent();
+        }
+
+        //如果是快速发布，则清理post_content，避免标签不规范
+        if (data.is_quick) {
+            data.post_content = clean_content('<div>' + data.post_content + '</div>');
+
+            if (data.hide_content.length) {
+                data.hide_content = clean_content(data.hide_content);
+            }
         }
 
         //封面数据
@@ -27,12 +36,98 @@
         }
 
         zib_ajax(_this, data, function (n) {
+            window.post_is_save = true;
             if (n.html) {
                 form.find('.submit-text').html(n.html);
             }
             n.post_id && form.find('input[name="post_id"]').val(n.post_id);
         });
+
+        function clean_content(content) {
+            return $($.parseHTML(content)).prop('outerHTML');
+        }
     });
+
+    quick_upload();
+    _body.on('post_ajax.ed', quick_upload);
+
+    function quick_upload() {
+        //快速编辑
+        if ($('.quick-upload').length) {
+            tbquire(['editextend'], function () {
+                var $upload_box = $('.quick-upload');
+                if ($upload_box.data('is-on')) {
+                    return;
+                }
+                $upload_box.data('is-on', true); //标记为已加载
+
+                var $add = $upload_box.find('.add');
+                var $preview = $upload_box.find('.preview');
+
+                var media = new zib.media({
+                    type: 'image',
+                    is_upload: true,
+                    upload_multiple: ~~_win.img_upload_multiple,
+                    upload_size: _win.upload_img_size || 4,
+                    multiple: 9,
+                });
+
+                $add.on('click', function () {
+                    media.open();
+                });
+
+                $upload_box.on('click', '.preview-remove', function () {
+                    var _this = $(this);
+                    _this.closest('.preview-item').remove();
+                });
+
+                media.$el.on('lists_submit', function (e, data) {
+                    var lists = data.data;
+                    //lists反序
+                    for (let k in lists) {
+                        var src = lists[k].large_url;
+                        addImg(src, lists[k].id, lists[k].url, lists[k].title || '');
+                    }
+
+                    //重置media的已选择数据
+                    media.resetActiveLists();
+                });
+
+                //上传后自动被选择
+                media.$el.on('upload', function (e, data) {
+                    media.active_lists.push(data.id);
+                    //重置media的已选择数据
+                    media.setActiveLists(media.active_lists);
+                });
+
+                //手动输入图片地址
+                media.$el.on('input_submit', function (e, data) {
+                    var lists = data.vals;
+                    for (let k in lists) {
+                        addImg(lists[k]);
+                    }
+
+                    //重置media的已选择数据
+                    media.resetInputVals();
+                });
+
+                function addImg(src, id, full, alt) {
+                    var preview = $('<div class="preview-item"><img src="' + src + '"><div class="preview-remove"><svg class="ic-close" aria-hidden="true"><use xlink:href="#icon-close"></use></svg></div></div>');
+
+                    var input_value = $('<input type="hidden" name="images[]" value="">');
+                    input_value.val(JSON.stringify({ src: src, id: id, full: full, alt: alt }));
+                    preview.append(input_value);
+
+                    //如果已经有内容了，在最后一个内容后面追加
+                    if ($preview.find('.preview-item').length) {
+                        $preview.find('.preview-item').last().after(preview);
+                    } else {
+                        $preview.prepend(preview);
+                    }
+                }
+            });
+        }
+    }
 
     _body.on('change', "[name='vote[type]']", function () {
         vote_change($(this));

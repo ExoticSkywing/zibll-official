@@ -3,7 +3,7 @@
  * @Author       : Qinver
  * @Url          : zibll.com
  * @Date         : 2025-02-24 14:02:36
- * @LastEditTime : 2026-01-31 15:27:53
+ * @LastEditTime : 2026-03-12 20:58:20
  * @Project      : Zibll子比主题
  * @Description  : 更优雅的Wordpress主题 | 订单处理
  * Copyright (c) 2025 by Qinver, All Rights Reserved.
@@ -127,6 +127,7 @@ function zib_shop_get_confirm_data($products_items = null)
                 ];
                 $options_active_name           = '';
                 $options_active_name_separator = ' · '; //分隔符
+                $main_image_url                = '';
 
                 if (isset($product_options[0])) {
                     //有商品选项
@@ -146,9 +147,15 @@ function zib_shop_get_confirm_data($products_items = null)
                     foreach ($options_active as $option_index => $item_index) {
                         $prices['unit_price'] += (float) $product_options[$option_index]['opts'][$item_index]['price_change']; //单价浮动
 
+                        //组合商品选项的名称
                         if (isset($product_options[$option_index]['name']) && isset($product_options[$option_index]['opts'][$item_index]['name'])) {
                             $options_active_name .= ($_separator_count > 0 ? $options_active_name_separator : '') . $product_options[$option_index]['opts'][$item_index]['name'];
                             $_separator_count++;
+                        }
+
+                        //选择商品选项的主图
+                        if (!$main_image_url && !empty($product_options[$option_index]['opts'][$item_index]['image'])) {
+                            $main_image_url = $product_options[$option_index]['opts'][$item_index]['image'];
                         }
                     }
 
@@ -216,6 +223,7 @@ function zib_shop_get_confirm_data($products_items = null)
                     'product_id'          => $posts_item->ID,
                     'options_active_str'  => $item_key,
                     'options_active_name' => $options_active_name,
+                    'product_image'       => $main_image_url ?: $product_data[$posts_item->ID]['thumbnail_url'],
                     'stock_all'           => $item_stock_all, //库存交给JS处理
                     'prices'              => $prices,
                     'shipping_type'       => $product_data[$posts_item->ID]['shipping_type'],
@@ -910,4 +918,21 @@ function zib_shop_get_order_rebate_data($product_id, $user_id, $pay_price)
     }
 
     return $data;
+}
+
+/**
+ * 获取商城订单的商品图片
+ */
+function zib_shop_get_order_thumb($order, $class = '')
+{
+    $order         = (array) $order;
+    $product_image = zibpay::get_meta($order['id'], 'order_data.product_image');
+    if (!$product_image) {
+        return zib_shop_get_product_thumbnail($order['post_id'], $class);
+    }
+
+    $_lazy_attr = zib_get_lazy_attr('lazy_posts_thumb', $product_image, $class);
+    $alt        = '商品主图' . zib_get_delimiter_blog_name();
+    $img_html   = '<img' . $_lazy_attr . ' alt="' . $alt . '">';
+    return $img_html;
 }

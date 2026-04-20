@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-11-03 00:09:44
- * @LastEditTime : 2025-12-22 13:37:16
+ * @LastEditTime : 2026-03-14 16:27:03
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -859,6 +859,7 @@ function zibpay_post_mate_csf_fields()
         }
     }
     $pay_cuont_default = zib_get_mt_rand_number(_pz('pay_cuont_default', 0));
+    $new_badge = zib_get_csf_option_new_badge();
 
     $fields = array(
         array(
@@ -892,6 +893,46 @@ function zibpay_post_mate_csf_fields()
             'options'    => array(
                 '0'      => __('普通商品（金钱购买）', 'zib_language'),
                 'points' => __('积分商品（积分购买，依赖于用户积分功能）', 'zib_language'),
+            ),
+        ),
+        array(
+            'dependency' => array('pay_type', '!=', 'no'),
+            'title'      => '订单时效' . $new_badge['8.7'],
+            'id'         => 'order_expired_s',
+            'default'    => false,
+            'type'       => 'switcher',
+            'desc'       => '设置订单时效后，用户购买后在订单时效内可查看内容，超时后需再次购买才能查看（注意：设置后建议在简介或内容中提醒用户订单时效，避免用户投诉）',
+        ),
+        array(
+            'dependency' => array(
+                array('pay_type', '!=', 'no'),
+                array('order_expired_s', '!=', ''),
+            ),
+            'id'         => 'order_expired_opt',
+            'type'       => 'fieldset',
+            'class'      => 'compact',
+            'title'      => ' ',
+            'subtitle'   => '有效时间',
+            'sanitize'   => false,
+            'fields'     => array(
+                array(
+                    'title'   => '订单有效期',
+                    'id'      => 'time',
+                    'default' => 0,
+                    'type'    => 'number',
+                ),
+                array(
+                    'title'   => '单位',
+                    'type'    => 'select',
+                    'class'   => 'compact',
+                    'id'      => 'unit',
+                    'options' => array(
+                        'day'    => '天',
+                        'hour'   => '小时',
+                        'minute' => '分钟',
+                    ),
+                    'default' => 'day',
+                ),
             ),
         ),
         array(
@@ -940,6 +981,7 @@ function zibpay_post_mate_csf_fields()
             ),
             'id'         => 'pay_price',
             'title'      => '执行价',
+            'subtitle'   => '填0则为免费',
             'default'    => _pz('pay_price_default', '0.01'),
             'type'       => 'number',
             'unit'       => '元',
@@ -1014,6 +1056,15 @@ function zibpay_post_mate_csf_fields()
             'default'    => _pz('pay_rebate_discount', 0),
             'type'       => 'number',
             'unit'       => '元',
+        ),
+        array(
+            'dependency' => array('pay_type', '==', 2),
+            'id'         => 'download_limit_over_price',
+            'title'      => '免费下载次数超限后价格' . $new_badge['8.7'],
+            'desc'       => '如开启免费资源每日下载次数限制，则用户下载次数超限后，可按照此价格进行购买（填0则不可购买）<a href="' . zib_get_admin_csf_url('支付付费/vip-会员') . '">配置每日下载次数限制</a>',
+            'class'      => '',
+            'default'    => _pz('pay_download_limit_over_price',0),
+            'type'       => 'number',
         ),
         array(
             'dependency' => array('pay_type', '!=', 'no'),
@@ -1187,7 +1238,6 @@ function zibpay_post_mate_csf_fields()
                     'desc'     => '为“资源备注”按钮添加点击复制功能，请设置复制名称和复制内容',
                 ),
                 array(
-                    'dependency'   => array('link', '!=', ''),
                     'id'           => 'icon',
                     'type'         => 'icon',
                     'title'        => '自定义按钮图标',
@@ -1195,7 +1245,6 @@ function zibpay_post_mate_csf_fields()
                     'default'      => 'fa fa-download',
                 ),
                 array(
-                    'dependency' => array('link', '!=', ''),
                     'title'      => '自定义按钮文案',
                     'class'      => 'compact',
                     'id'         => 'name',
@@ -1205,13 +1254,12 @@ function zibpay_post_mate_csf_fields()
                     ),
                 ),
                 array(
-                    'dependency' => array('link', '!=', ''),
-                    'title'      => '自定义按钮颜色',
-                    'class'      => 'compact skin-color',
-                    'desc'       => '按钮图标、文案、颜色默认均会自动获取，建议为空即可。<br>上方的按钮图标为主题自带的fontawesome 4图标库，如需添加其它图标可采用HTML代码，请注意代码规范！<br><a href="https://www.zibll.com/547.html" target="_blank">使用阿里巴巴Iconfont图标详细图文教程</a>',
-                    'id'         => 'class',
-                    'type'       => 'palette',
-                    'options'    => CFS_Module::zib_palette(),
+                    'title'   => '自定义按钮颜色',
+                    'class'   => 'compact skin-color',
+                    'desc'    => '按钮图标、文案、颜色默认均会自动获取，建议为空即可。<br>上方的按钮图标为主题自带的fontawesome 4图标库，如需添加其它图标可采用HTML代码，请注意代码规范！<br><a href="https://www.zibll.com/547.html" target="_blank">使用阿里巴巴Iconfont图标详细图文教程</a>',
+                    'id'      => 'class',
+                    'type'    => 'palette',
+                    'options' => CFS_Module::zib_palette(),
                 ),
             ),
         ),
@@ -1492,6 +1540,14 @@ function zibpay_bulk_edit_custom_box($column_name, $post_type)
             'desc'       => '会员价格不能高于执行价',
         ),
         array(
+            'dependency' => array('pay_type', '==', 2),
+            'id'         => 'download_limit_over_price',
+            'title'      => '免费下载次数超限后价格',
+            'class'      => '',
+            'default'    => '',
+            'type'       => 'number',
+        ),
+        array(
             'dependency' => array(
                 array('pay_type', '!=', 'no'),
                 array('pay_modo', '!=', 'points'),
@@ -1556,6 +1612,7 @@ function zibpay_bulk_edit_save_post($post_id, $post, $update)
             case 'pay_price':
             case 'vip_1_price':
             case 'vip_2_price':
+            case 'download_limit_over_price':
             case 'pay_rebate_discount':
             case 'pay_cuont':
 

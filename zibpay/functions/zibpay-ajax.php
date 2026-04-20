@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:50
- * @LastEditTime : 2025-12-26 20:38:49
+ * @LastEditTime : 2026-03-30 19:08:40
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -1298,6 +1298,13 @@ function zibpay_points_initiate_order()
                 $vip_price = isset($pay_mate['vip_' . $vip_level . '_points']) ? (int) $pay_mate['vip_' . $vip_level . '_points'] : 0;
                 //会员金额和正常金额取更小值
                 $__price = $vip_price < $__price ? $vip_price : $__price;
+            }
+
+            if ($order_type == 2) {
+                $price_type = !empty($_REQUEST['price_type']) ? $_REQUEST['price_type'] : '';
+                if ($price_type === 'download_limit_over') {
+                    $__price = !empty($pay_mate['download_limit_over_price']) ? (int) $pay_mate['download_limit_over_price'] : 0;
+                }
             }
 
             if ($__price <= 0) {

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:36
- * @LastEditTime : 2026-01-29 15:25:32
+ * @LastEditTime : 2026-03-14 15:25:15
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
  * @Email         : 770349780@qq.com
@@ -3107,7 +3107,16 @@ function add_shortcode_hidecontent($atts, $content = null)
                 if ('free' == $paid['paid_type'] && _pz('pay_free_logged_show') && !$user_id) {
                     return '<div class="hidden-box"><a class="hidden-text signin-loader" href="javascript:;"><i class="fa fa-exclamation-circle"></i>&nbsp;&nbsp;免费资源，请登录后查看</a></div>';
                 } else {
-                    return '<div class="hidden-box show"><div class="hidden-text">本文付费阅读内容 - ' . $paid_name . '</div>' . ($content) . '</div>';
+                    //已经购买，且有效
+
+                    //获取订单到期时间
+                    $order_expired_time = $paid['order_expired_time'] ?? 0;
+                    $order_expired_html = '';
+                    if ($paid['paid_type'] == 'paid' && $order_expired_time) {
+                        $order_expired_html = '<span class="badg badg-sm c-yellow">' . $order_expired_time . '前可查看</span>';
+                    }
+
+                    return '<div class="hidden-box show"><div class="hidden-text">本文付费阅读内容 - ' . $paid_name . $order_expired_html . '</div>' . ($content) . '</div>';
                 }
             } else {
                 return apply_filters('hidecontent_payshow_hide_content', $_hide, $content, $post);

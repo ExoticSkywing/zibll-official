@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-10-23 21:36:42
- * @LastEditTime : 2026-01-30 22:17:11
+ * @LastEditTime : 2026-03-11 12:54:14
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -19,7 +19,7 @@ function zib_mail_smtp($phpmailer)
         $phpmailer->FromName   = _pz('mail_showname');
         $phpmailer->Host       = _pz('mail_host', 'smtp.qq.com');
         $phpmailer->Port       = _pz('mail_port', '465');
-        $phpmailer->Username   = _pz('mail_name', '88888888@qq.com');
+        $phpmailer->Username   = _pz('mail_smtp_name') ?: _pz('mail_name');
         $phpmailer->Sender     = _pz('mail_name', '88888888@qq.com');
         $phpmailer->Password   = _pz('mail_passwd', '123456789');
         $phpmailer->From       = _pz('mail_name', '88888888@qq.com');

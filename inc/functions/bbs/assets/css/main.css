@@ -955,6 +955,88 @@
 
 /**-----------小工具--------------**/
 
+/**************快速发布-编辑器***************/
+.quick-posts-box .line-form-line {
+    display: none;
+}
+.quick-posts-box .edit-posts-title textarea {
+    color: var(--main-color);
+    opacity: 1;
+    padding: 0;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+.quick-posts-box .edit-posts-content textarea {
+    outline: 0 !important;
+    border: none;
+    display: block;
+    width: 100%;
+    padding: 0;
+    color: var(--main-color);
+    background: var(--main-bg-color);
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.quick-posts-box .preview .add,
+.quick-posts-box .preview .preview-item {
+    width: 90px;
+    height: 90px;
+    border: 1px dashed var(--main-border-color);
+    background: none;
+    margin: 2px;
+}
+
+.quick-posts-box .drop-select .dropdown-menu {
+    min-width: 320px;
+}
+
+.quick-posts-box .dropdown-menu.fluid::before {
+    left: 20px;
+}
+.quick-selected-tags > * {
+    display: inline-block;
+}
+
+.quick-selected-tags [name='topic'] .square-box,
+.quick-selected-tags [name='topic'] .info .desc {
+    display: none;
+}
+
+.quick-selected-tags > *:empty {
+    display: none;
+}
+
+.quick-selected-tags [name='topic'] {
+    color: var(--focus-color);
+    margin-top: 6px;
+}
+
+.quick-selected-tags [name='tag'] .badg {
+    font-size: 12px;
+    padding: 1px 5px;
+}
+
+.quick-input-group {
+    padding: 15px;
+    border: 1px solid var(--main-border-color);
+    border-radius: var(--main-radius);
+}
+
+.quick-posts-box .but-plate {
+    font-size: 14px;
+    padding: 5px 9px 6px 5px;
+}
+
+.quick-more-btns {
+    color: var(--muted-color);
+    position: relative;
+}
+.quick-posts-submit .but {
+    padding: 6px 5px;
+    min-width: 85px;
+}
+
 /****************侧边栏*************/
 .plate-info-sidebar .header-content {
     padding: 55px 20px 25px;
@@ -1350,4 +1432,26 @@
         transform: scale(0.85);
         transform-origin: bottom right;
     }
+
+    /**************快速发布***************/
+    .quick-more-btns .drop-select {
+        position: unset !important;
+    }
+
+    .quick-posts-box .drop-select .dropdown-menu {
+        width: 100% !important;
+        box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .quick-posts-box .drop-select .dropdown-menu::before {
+        display: none;
+    }
+
+    .quick-posts-submit .but {
+        min-width: 65px;
+    }
+
+    .quick-posts-box .but-plate {
+        font-size: 13px;
+      }
 }

@@ -3,7 +3,7 @@
  * @Author: Qinver
  * @Url: zibll.com
  * @Date: 2023-07-20 12:41:34
- * @LastEditTime : 2025-12-23 18:30:11
+ * @LastEditTime : 2026-03-15 14:43:02
  * @Email: 770349780@qq.com
  * @Project: Zibll子比主题
  * @Description: 更优雅的Wordpress主题
@@ -61,6 +61,51 @@ function zib_get_term_posts_meta_sum($term_id, $mata)
 }
 
 /**
+ * 获取分类和专题的搜索按钮
+ * @param int $term_id 分类或专题的ID
+ * @param string $class 按钮的类名
+ * @return string 搜索按钮的HTML
+ */
+
+function zib_get_term_search_btn($term_id, $class = '', $text = '')
+{
+    $term = get_term($term_id);
+    if (is_wp_error($term) || !isset($term->name)) {
+        return;
+    }
+
+    $args = array(
+        'class'       => $class,
+        'trem'        => $term->term_id,
+        'trem_name'   => zib_str_cut($term->name, 0, 8),
+        'type'        => 'post',
+        'placeholder' => '在' . zib_get_taxonomy_name($term->taxonomy) . '[' . $term->name . ']中搜索',
+    );
+
+    if ($text) {
+        $args['con'] = $text;
+    }
+    return zib_get_search_link($args);
+}
+
+/**
+ * 获取分类封面的更多按钮
+ * @param int $term_id 分类的ID
+ * @param string $class 按钮的类名
+ * @return string 更多按钮的HTML
+ */
+function zib_get_term_cover_more_btn($term_id, $class = '')
+{
+    $term = get_term($term_id);
+    if (is_wp_error($term) || !isset($term->name)) {
+        return;
+    }
+
+    $search = zib_get_term_search_btn($term_id, $class);
+    return '<div class="page-cover-more-btns flex ac ' . $class . '">' . $search . '</div>';
+}
+
+/**
  * @description: 获取term的总查看量
  * @param {*} $term_id
  * @return {*}
@@ -85,10 +130,6 @@ function zib_get_term_post_views_sum($term_id, $is_cut = false)
 function zib_topics_cover($cat_id = '')
 {
     $desc = trim(strip_tags(category_description()));
-    if (is_super_admin() && !$desc) {
-        $desc = '请在Wordress后台-文章-文章专题中添加专题描述！';
-    }
-    $desc .= zib_get_term_admin_edit('编辑此专题');
 
     global $wp_query;
     if (!$cat_id) {
@@ -107,8 +148,9 @@ function zib_topics_cover($cat_id = '')
         $title .= '<span class="icon-spot">共' . $count . '篇</span>';
     }
 
+    $more_btn = zib_get_term_cover_more_btn($cat_id);
     $img = zib_get_taxonomy_img_url(null, null, _pz('topics_default_cover'));
-    zib_page_cover($title, $img, $desc, '', true);
+    zib_page_cover($title, $img, $desc, $more_btn, true);
 }
 
 function zib_cat_cover($cat_id = '')
@@ -117,11 +159,6 @@ function zib_cat_cover($cat_id = '')
         $cat_id = get_queried_object_id();
     }
     $desc = trim(strip_tags(category_description()));
-    if (is_super_admin() && !$desc) {
-        $desc = '请在Wordress后台-文章-文章分类中添加分类描述！';
-    }
-
-    $desc .= zib_get_term_admin_edit('编辑此分类');
 
     global $wp_query;
 
@@ -129,7 +166,8 @@ function zib_cat_cover($cat_id = '')
     if (is_wp_error($cat) || !isset($cat->name)) {
         return;
     }
-    $title = '<i class="fa fa-folder-open em12 mr10 ml6" aria-hidden="true"></i>' . $cat->cat_name;
+    $title    = '<i class="fa fa-folder-open em12 mr10 ml6" aria-hidden="true"></i>' . $cat->cat_name;
+    $more_btn = zib_get_term_cover_more_btn($cat_id);
 
     if (_pz('cat_post_count_s', true) && $wp_query->get('paged') <= 1) {
         $count = zib_get_the_found_posts();
@@ -137,11 +175,12 @@ function zib_cat_cover($cat_id = '')
     }
     if (_pz('page_cover_cat_s', true)) {
         $img = zib_get_taxonomy_img_url(null, null, _pz('cat_default_cover'));
-        zib_page_cover($title, $img, $desc);
+        zib_page_cover($title, $img, $desc, $more_btn);
     } else {
-        echo '<div class="zib-widget">';
+        echo '<div class="zib-widget relative">';
         echo '<h4 class="title-h-left">' . $title . '</h4>';
         echo '<div class="muted-2-color">' . $desc . '</div>';
+        echo $more_btn;
         echo '</div>';
     }
 }
@@ -149,11 +188,7 @@ function zib_cat_cover($cat_id = '')
 function zib_tag_cover()
 {
     $desc = trim(strip_tags(tag_description()));
-    if (is_super_admin() && !$desc) {
-        $desc = '请在Wordress后台-文章-文章分类中添加标签描述！';
-    }
 
-    $desc .= zib_get_term_admin_edit('编辑此标签');
     global $wp_query;
     $tag_id = get_queried_object_id();
     $tag    = get_tag($tag_id);
@@ -168,13 +203,15 @@ function zib_tag_cover()
         $title .= '<span class="icon-spot">共' . $count . '篇</span>';
     }
 
+    $more_btn = zib_get_term_cover_more_btn($tag_id);
     if (_pz('page_cover_tag_s', true)) {
         $img = zib_get_taxonomy_img_url(null, null, _pz('tag_default_cover'));
-        zib_page_cover($title, $img, $desc);
+        zib_page_cover($title, $img, $desc, $more_btn);
     } else {
-        echo '<div class="zib-widget">';
+        echo '<div class="zib-widget relative">';
         echo '<h4 class="title-h-left">' . $title . '</h4>';
         echo '<div class="muted-2-color">' . $desc . '</div>';
+        echo $more_btn;
         echo '</div>';
     }
 }

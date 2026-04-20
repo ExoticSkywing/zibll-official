@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:36
- * @LastEditTime: 2025-09-30 20:42:48
+ * @LastEditTime : 2026-03-10 12:19:40
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -23,3 +23,5 @@ require_once get_theme_file_path('/inc/inc.php');
 if (file_exists(get_theme_file_path('/func.php'))) {
     require_once get_theme_file_path('/func.php');
 }
+
+

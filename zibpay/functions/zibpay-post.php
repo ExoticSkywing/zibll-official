@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2022-03-31 16:36:20
- * @LastEditTime : 2025-11-25 20:16:39
+ * @LastEditTime : 2026-03-30 19:06:40
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|支付系统|文章模块
@@ -18,21 +18,10 @@
  * @param {*} $con
  * @return {*}
  */
-function zibpay_get_post_cashier_link($post_id = 0, $class = 'but jb-red', $con = '立即购买')
+function zibpay_get_post_cashier_link($post_id = 0, $class = 'but jb-red', $con = '立即购买', $query_arg = array())
 {
-
     if (!$post_id) {
         return;
-    }
-
-    $methods = zibpay_get_payment_methods();
-
-    if (!$methods) {
-        if (is_super_admin()) {
-            return '<a href="' . zib_get_admin_csf_url('支付付费/收款接口') . '" class="but c-red mr6">请先配置收款方式及收款接口</a>';
-        } else {
-            return '<span class="badg px12 c-yellow-2">暂时无法购买，请与客服联系</span>';
-        }
     }
 
     $args = array(
@@ -48,36 +37,9 @@ function zibpay_get_post_cashier_link($post_id = 0, $class = 'but jb-red', $con 
         ),
     );
 
-    //每次都刷新的modal
-    return zib_get_refresh_modal_link($args);
-}
-
-/**
- * @description: 积分支付收银台
- * @param {*} $post_id
- * @param {*} $class
- * @param {*} $con
- * @return {*}
- */
-function zibpay_get_post_points_cashier_link($post_id = 0, $class = 'but jb-yellow', $con = '立即购买')
-{
-
-    if (!$post_id) {
-        return;
+    if ($query_arg) {
+        $args['query_arg'] = array_merge($args['query_arg'], $query_arg);
     }
-
-    $args = array(
-        'tag'           => 'a',
-        'data_class'    => 'modal-mini',
-        'class'         => 'cashier-link ' . $class,
-        'mobile_bottom' => true,
-        'height'        => 330,
-        'text'          => $con,
-        'query_arg'     => array(
-            'action' => 'pay_points_cashier_modal',
-            'id'     => $post_id,
-        ),
-    );
 
     //每次都刷新的modal
     return zib_get_refresh_modal_link($args);
@@ -88,7 +50,7 @@ function zibpay_get_post_points_cashier_link($post_id = 0, $class = 'but jb-yell
  * @param {*} $post_id
  * @return {*}
  */
-function zibpay_pay_points_cashier_modal($post_id = 0)
+function zibpay_pay_points_cashier_modal($post_id = 0, $price_type = '')
 {
     $user_id  = get_current_user_id();
     $pay_mate = get_post_meta($post_id, 'posts_zibpay', true);
@@ -117,6 +79,17 @@ function zibpay_pay_points_cashier_modal($post_id = 0)
         }
     }
 
+    if ($price_type == 'download_limit_over') {
+        $price = !empty($pay_mate['download_limit_over_price']) ? (int) $pay_mate['download_limit_over_price'] : 0;
+        if ($price <= 0) {
+            return;
+        }
+
+        $original_price = '';
+        $pay_price      = $price;
+        $vip_price      = 0;
+    }
+
     //商品卡片
     $con = '<div class="mb10 order-type-' . $pay_type . '"><span class="pay-tag badg badg-sm mr6">' . $order_type_name . '</span><span>' . $pay_title . '</span></div>';
     $con .= '<div class="mb10 muted-box padding-h6 line-16">';
@@ -133,6 +106,7 @@ function zibpay_pay_points_cashier_modal($post_id = 0)
     $form = '<form>';
     $form .= '<input type="hidden" name="post_id" value="' . $post_id . '">';
     $form .= '<input type="hidden" name="order_type" value="' . $pay_type . '">';
+    $form .= '<input type="hidden" name="price_type" value="' . $price_type . '">';
     $form .= '<input type="hidden" name="action" value="points_initiate_pay">';
     $form .= '<button class="but jb-yellow padding-lg btn-block radius wp-ajax-submit mt10" >立即支付<span class="ml6 px12">' . zibpay_get_points_mark() . '</span>' . $pay_price . '</button>';
     $form .= '</form>';
@@ -143,7 +117,7 @@ function zibpay_pay_points_cashier_modal($post_id = 0)
         $points_user_url = zib_get_user_center_url('balance');
 
         $form = '';
-        $form .= '<div class="badg c-red btn-block mb20">抱歉，您的积分不足，暂时无法购买</div>';
+        $form .= '<div class="badg c-red btn-block mb20">抱歉，您的积分不足，暂时无法支付</div>';
         $form .= '<div class="modal-buts but-average"><a rel="nofollow" type="button" class="but padding-lg" href="' . $points_user_url . '">我的积分</a>' . $points_pay_link . '</div>';
     }
 
@@ -156,7 +130,7 @@ function zibpay_pay_points_cashier_modal($post_id = 0)
  * @param {*} $post_id
  * @return {*}
  */
-function zibpay_pay_cashier_modal($post_id = 0)
+function zibpay_pay_cashier_modal($post_id = 0, $price_type = '')
 {
     $user_id  = get_current_user_id();
     $pay_mate = get_post_meta($post_id, 'posts_zibpay', true);
@@ -196,6 +170,17 @@ function zibpay_pay_cashier_modal($post_id = 0)
         }
     }
 
+    if ($price_type == 'download_limit_over') {
+        $price = !empty($pay_mate['download_limit_over_price']) ? round((float) $pay_mate['download_limit_over_price'], 2) : 0;
+        if ($price <= 0) {
+            return;
+        }
+
+        $original_price = '';
+        $pay_price      = $price;
+        $vip_price      = 0;
+    }
+
     //商品卡片
     $con = '<div class="mb10 order-type-' . $pay_type . '"><span class="pay-tag badg badg-sm mr6">' . $order_type_name . '</span><span>' . $pay_title . '</span></div>';
     $con .= '<div class="mb10 muted-box padding-h6 line-16">';
@@ -208,6 +193,7 @@ function zibpay_pay_cashier_modal($post_id = 0)
     $form = '<form>';
     $form .= '<input type="hidden" name="post_id" value="' . $post_id . '">';
     $form .= '<input type="hidden" name="order_type" value="' . $pay_type . '">';
+    $form .= '<input type="hidden" name="price_type" value="' . $price_type . '">';
     $form .= zibpay_get_initiate_pay_input($pay_type, ($pay_price - $rebate_discount), $post_id);
     $form .= '</form>';
 
@@ -634,6 +620,14 @@ function zibpay_posts_paid_box($pay_mate, $paid, $post_id = '')
         $paid_info .= '<div class="flex jsb"><span>支付时间</span><span>' . $paid['pay_time'] . '</span></div>';
         $paid_info .= '<div class="flex jsb"><span>支付金额</span><span>' . zibpay_get_order_pay_price($paid) . '</span></div>';
 
+        //到期时间
+        $order_expired_time = $paid['order_expired_time'] ?? 0;
+        $order_expired_html = '';
+        if ($paid['paid_type'] == 'paid' && $order_expired_time) {
+            $order_expired_html = '<div class="flex jsb"><span>订单有效期</span><span data-toggle="tooltip" title="当前订单有效期截止到' . $order_expired_time . '，到期后需重新购买">' . $order_expired_time . '<i class="fa fa-question-circle-o ml6"></i></span></div>';
+        }
+        $paid_info .= $order_expired_html;
+
         $paid_box .= '<div class="flex ac jb-green padding-10 em09">';
         $paid_box .= '<div class="text-center flex-auto"><div class="mb6"><i class="fa fa-shopping-bag fa-2x" aria-hidden="true"></i></div><b class="em12">' . $paid_name . '</b></div>';
         $paid_box .= '<div class="em09 paid-info flex-auto">' . $paid_info . '</div>';
@@ -998,7 +992,7 @@ function zibpay_get_post_mini_badge($pay_mate)
 }
 
 //获取带有form的购买按钮
-function zibpay_get_pay_form_but($pay_mate = array(), $post_id = 0, $class = 'pay-button')
+function zibpay_get_pay_form_but($pay_mate = array(), $post_id = 0)
 {
     if (!$post_id) {
         $post_id = get_the_ID();
@@ -1061,11 +1055,7 @@ function zibpay_get_pay_form_but($pay_mate = array(), $post_id = 0, $class = 'pa
 
     if (!$pay_button) {
         add_filter('zibpay_is_show_paybutton', '__return_true');
-        if ($is_points_modo) {
-            $pay_button = zibpay_get_post_points_cashier_link($post_id);
-        } else {
-            $pay_button = zibpay_get_post_cashier_link($post_id) . $remind;
-        }
+        $pay_button = zibpay_get_post_cashier_link($post_id, 'but ' . ($is_points_modo ? 'jb-yellow' : 'jb-red')) . ($is_points_modo ? '' : $remind);
     }
 
     return $pay_button;

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-11-24 17:17:23
- * @LastEditTime : 2026-01-04 00:19:02
+ * @LastEditTime : 2026-03-16 16:24:21
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|用户禁封小黑屋相关函数
@@ -931,7 +931,7 @@ function zib_get_report_modal($user_id, $url = '')
                 <input type="hidden" name="user_id" value="' . $user_id . '">
                 ' . wp_nonce_field($action, '_wpnonce', false, false) . '
                 <button type="button" data-dismiss="modal" class="but">取消</button>
-                <button class="but c-blue " zibupload="submit" zibupload-nomust="true"><i class="fa fa-check" aria-hidden="true"></i>确认提交</button>
+                <button class="but c-blue" zibupload="submit" zibupload-nomust="true"><i class="fa fa-check" aria-hidden="true"></i>确认提交</button>
             </div>';
     $html .= '</form>';
 

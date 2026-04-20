@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-10-17 19:56:54
- * @LastEditTime : 2026-01-04 00:12:32
+ * @LastEditTime : 2026-03-15 14:48:43
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|搜索功能相关函数
@@ -46,8 +46,6 @@ function zib_search_content()
     $tabs_args           = apply_filters('search_main_tabs_array', $tabs_args);
     $base_url            = add_query_arg(array('s' => $s, 'user' => $user), home_url());
     $delimiter_blog_name = zib_get_delimiter_blog_name();
-    $desc_text           = zib_get_search_desc();
-    $tab_filter          = zib_get_search_tab_nav_filter();
 
     $tab_nav = '';
     foreach ($tabs_args as $k => $tab) {
@@ -59,9 +57,11 @@ function zib_search_content()
     }
     $tab_nav     = '<div class="list-inline scroll-x mini-scrollbar tab-nav-theme">' . $tab_nav . '</div>';
     $tab_content = apply_filters('main_search_tab_content_' . $type, '');
+    $desc_text   = zib_get_search_desc(); //必须放在$tab_content下面，否则用户数量不显示
+    $tab_filter  = zib_get_search_tab_nav_filter();
 
     echo '<div class="ajaxpager search-page-ajaxpager">
-    <div class="ajax-item-header type-'.esc_attr($type).'">
+    <div class="ajax-item-header type-' . esc_attr($type) . '">
         <div class="search-desc-text mb10 mt10 muted-2-color">' . $desc_text . '</div>
         <div class="search-tab-header zib-widget relative padding-h10"><div>' . $tab_nav . '</div><div class="search-tab-filter">' . $tab_filter . '</div></div>
     </div>
@@ -678,7 +678,7 @@ function zib_404_page_add_search()
 
     echo '<div mini-touch="nav_search" touch-direction="top" class="main-search fixed-body main-bg box-body navbar-search nopw-sm">';
     echo '<div class="container">';
-    echo '<div class="mb20"><button class="close" data-toggle-class data-target=".navbar-search" >' . zib_get_svg('close', null, 'ic-close') . '</button></div>';
+    echo '<div class="mb20 search-close-box"><button class="but cir" data-toggle-class data-target=".navbar-search" >' . zib_get_svg('close', null, 'ic-close') . '</button></div>';
     echo zib_get_remote_box($args);
     echo '</div>';
     echo '</div>';

@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2026-01-30 21:40:48
+ * @LastEditTime : 2026-03-12 12:19:14
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|后台商品配置项
@@ -178,7 +178,7 @@ function zib_shop_admin_product_metabox()
                                 'id'    => 'image',
                                 'type'  => 'upload',
                                 'title' => '图片',
-                                'desc'  => '如果需要设置选项图片，请确保当前选项下都设置了图片',
+                                'desc'  => '如果需要设置选项图片，请确保当前选项下都设置了图片（正方形图片效果最佳）',
                             ),
                         ),
                     ),

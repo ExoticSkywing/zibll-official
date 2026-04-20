@@ -3,7 +3,7 @@
 * @Author : Qinver
 * @Url : zibll.com
 * @Date : 2025-02-27 19:09:53
- * @LastEditTime : 2026-01-30 22:21:54
+ * @LastEditTime : 2026-03-12 20:18:50
 * @Project : Zibll子比主题
 * @Description : 更优雅的Wordpress主题 | 统一处理VUE数据
 * Copyright (c) 2025 by Qinver, All Rights Reserved.
@@ -154,7 +154,7 @@ function zib_shop_get_product_vue_data($post)
         'title'              => $post->post_title,
         'url'                => get_the_permalink($post),
         'thumbnail'          => zib_shop_get_product_thumbnail($post),
-        'thumbnail_url'      => zib_shop_get_product_thumbnail_url($post),
+        'thumbnail_url'      => zib_shop_get_product_thumbnail_url($post, 'full'),
         'pay_mark'           => zibpay_get_pay_mark(),
         'points_mark'        => zibpay_get_points_mark(),
         'desc'               => $_configs['desc'] ?? '',
@@ -189,8 +189,9 @@ function zib_shop_get_product_vue_data($post)
         'email_fill'         => zib_shop_get_product_email_fill_config($post->ID), //是否需要用户填写email
     ];
 
-    $data['show_mark'] = $data['pay_modo'] === 'points' ? $data['points_mark'] : $data['pay_mark'];
-    $data['is_points'] = $data['pay_modo'] === 'points';
+    $data['main_image_url'] = $data['thumbnail_url'];
+    $data['show_mark']      = $data['pay_modo'] === 'points' ? $data['points_mark'] : $data['pay_mark'];
+    $data['is_points']      = $data['pay_modo'] === 'points';
 
     if ($data['shipping_type'] === 'auto') {
         $data['shipping_title'] = !empty($_configs['shipping_delivery_desc']) ? $_configs['shipping_delivery_desc'] : '自动发货';

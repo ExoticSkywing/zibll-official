@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-03 17:40:48
+ * @LastEditTime : 2026-03-16 19:04:41
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|论坛系统|工具函数
@@ -220,7 +220,8 @@ function zib_bbs_get_tab_nav($type = 'nav', $options = array(), $id_prefix = 'ho
             } else {
                 //第一页则直接显示内容
                 $opt['index'] = $i;
-                $html .= apply_filters('bbs_' . $id_prefix . '_tab_content_' . $_key, '', $opt);
+                $content      = apply_filters('bbs_' . $id_prefix . '_tab_content_' . $_key, '', $opt);
+                $html .= apply_filters('bbs_' . $id_prefix . '_tab_content', $content, $opt);
             }
             $html .= '</div>';
         }

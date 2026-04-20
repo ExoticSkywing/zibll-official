@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-11-11 11:41:45
- * @LastEditTime : 2026-01-29 16:30:06
+ * @LastEditTime : 2026-03-13 15:50:39
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|后台主题设置
@@ -2267,10 +2267,10 @@ function zib_csf_admin_options()
                 'type'    => 'text',
             ),
             array(
-                'title'   => __('自定义标题前缀', 'zib_language').$new_badge['8.5'],
+                'title'   => __('自定义标题前缀', 'zib_language') . $new_badge['8.5'],
                 'id'      => 'mail_title_prefix',
-                'desc'    => '自定义邮件标题前缀，默认为[<code>'.get_bloginfo('name').'</code>]',
-                'default' => '['.get_bloginfo('name').']',
+                'desc'    => '自定义邮件标题前缀，默认为[<code>' . get_bloginfo('name') . '</code>]',
+                'default' => '[' . get_bloginfo('name') . ']',
                 'type'    => 'text',
             ),
             array(
@@ -2311,11 +2311,9 @@ function zib_csf_admin_options()
                 'type'    => 'switcher',
                 'default' => false,
             ),
-
             array(
                 'dependency' => array('mail_smtps', '!=', '', '', 'visible'),
-                'title'      => 'SMTP配置',
-                'subtitle'   => '发信人邮箱账号',
+                'title'      => '发信人邮箱账号',
                 'class'      => 'compact',
                 'id'         => 'mail_name',
                 'class'      => 'compact-heading',
@@ -2323,7 +2321,6 @@ function zib_csf_admin_options()
                 'validate'   => 'csf_validate_email',
                 'type'       => 'text',
             ),
-
             array(
                 'dependency' => array('mail_smtps', '!=', '', '', 'visible'),
                 'id'         => 'mail_passwd',
@@ -2332,6 +2329,17 @@ function zib_csf_admin_options()
                 'desc'       => '此密码非邮箱密码，一般需要单独开启',
                 'default'    => '',
                 'type'       => 'text',
+            ),
+            array(
+                'dependency' => array('mail_smtps', '!=', '', '', 'visible'),
+                'title'      => ' ',
+                'subtitle'   => 'SMTP用户名',
+                'class'      => 'compact',
+                'id'         => 'mail_smtp_name',
+                'default'    => '',
+                'validate'   => '',
+                'type'       => 'text',
+                'desc'       => '有些自建邮局需要自定义用户名，则在此设置，其余情况建议留空',
             ),
 
             array(
@@ -7225,7 +7233,7 @@ function zib_csf_admin_options()
     //微信公众号模板消息
     CSF::createSection($prefix, array(
         'parent'      => 'user',
-        'title'       => '微信通知'.$new_badge['8.5'],
+        'title'       => '微信通知' . $new_badge['8.5'],
         'icon'        => 'fa fa-fw fa-wechat',
         'description' => '',
         'fields'      => array(
@@ -9329,7 +9337,7 @@ function zib_csf_admin_options()
                         'icon'   => 'fa fa-user-o',
                         'fields' => array(
                             array(
-                                'title'   => '付费资源-免费资源每日可下载',
+                                'title'   => '付费资源：免费资源每日可下载',
                                 'desc'    => '普通用户每日最多可下载几个免费资源(为0则不限制)',
                                 'id'      => 'pay_download_limit',
                                 'default' => 0,
@@ -9337,7 +9345,7 @@ function zib_csf_admin_options()
                                 'unit'    => '个',
                             ),
                             array(
-                                'title'   => '付费资源-下载限速' . $new_badge['7.6'],
+                                'title'   => '付费资源：下载限速' . $new_badge['7.6'],
                                 'desc'    => '付费下载限制最大下载速度(为0则不限制)<br>此功能只对本地服务器的文件有效，外链文件无效<br>如果文件存在本地，开启此功能还可以减少服务器压力，当然用户的真实下载速度还限制于服务器带宽',
                                 'id'      => 'pay_download_speed',
                                 'default' => 0,
@@ -9351,7 +9359,7 @@ function zib_csf_admin_options()
                         'icon'   => 'fa fa-diamond',
                         'fields' => array(
                             array(
-                                'title'    => '付费资源-免费资源每日可下载',
+                                'title'    => '付费资源：免费资源每日可下载',
                                 'desc'     => _pz('pay_user_vip_1_name') . '每日最多可下载几个免费资源(为0则不限制)',
                                 'id'       => 'pay_download_limit_vip_1',
                                 'subtitle' => _pz('pay_user_vip_1_name'),
@@ -9360,7 +9368,7 @@ function zib_csf_admin_options()
                                 'unit'     => '个',
                             ),
                             array(
-                                'title'    => '付费资源-下载限速' . $new_badge['7.6'],
+                                'title'    => '付费资源：下载限速' . $new_badge['7.6'],
                                 'subtitle' => _pz('pay_user_vip_1_name'),
                                 'desc'     => '付费下载限制最大下载速度(为0则不限制)<br>此功能只对本地服务器的文件有效，外链文件无效',
                                 'id'       => 'pay_download_speed_vip_1',
@@ -9375,7 +9383,7 @@ function zib_csf_admin_options()
                         'icon'   => 'fa fa-diamond',
                         'fields' => array(
                             array(
-                                'title'    => '付费资源-免费资源每日可下载',
+                                'title'    => '付费资源：免费资源每日可下载',
                                 'desc'     => _pz('pay_user_vip_2_name') . '每日最多可下载几个免费资源(为0则不限制)',
                                 'id'       => 'pay_download_limit_vip_2',
                                 'subtitle' => _pz('pay_user_vip_2_name'),
@@ -9384,7 +9392,7 @@ function zib_csf_admin_options()
                                 'unit'     => '个',
                             ),
                             array(
-                                'title'    => '付费资源-下载限速' . $new_badge['7.6'],
+                                'title'    => '付费资源：下载限速' . $new_badge['7.6'],
                                 'subtitle' => _pz('pay_user_vip_2_name'),
                                 'desc'     => '付费下载限制最大下载速度(为0则不限制)<br>此功能只对本地服务器的文件有效，外链文件无效',
                                 'id'       => 'pay_download_speed_vip_2',

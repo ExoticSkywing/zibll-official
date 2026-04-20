@@ -3,14 +3,13 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-10-11 12:28:08
- * @LastEditTime: 2025-10-20 12:56:05
+ * @LastEditTime : 2026-03-10 12:23:54
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
  * @Read me       : 感谢您使用子比主题，主题源码有详细的注释，支持二次开发。
  * @Remind        : 使用盗版主题会存在各种未知风险。支持正版，从我做起！
  */
-
 
 //链接管理++
 add_action('admin_bar_menu', 'zib_add_link_toolbar', 999);
@@ -76,10 +75,12 @@ function zib_link_submit_meta_box($link)
 {
 
     $html = '<p>请注意配置对应项目：</p>';
+    $html .= '<ul>';
     $html .= '<li>图像描述->链接简介</li>';
     $html .= '<li>图像地址->链接LOGO图像</li>';
     $html .= '<li>私密链接->勾选私密链接视为未审核，不会在前台显示</li>';
     $html .= '<li>评分->可利用评分进行手动排序</li>';
+    $html .= '</ul>';
     echo $html;
 }
 

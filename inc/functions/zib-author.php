@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-09-29 13:18:37
- * @LastEditTime : 2025-12-31 18:05:00
+ * @LastEditTime : 2026-03-14 16:02:21
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -58,7 +58,7 @@ function zib_filter_author_header_desc_super_admin($desc, $user_id)
     return $desc . $super_admin;
 }
 add_filter('author_header_identity', 'zib_filter_author_header_desc_super_admin', 10, 2);
- 
+
 //获取顶部的按钮
 function zib_get_author_header_btns($author_id)
 {
@@ -117,10 +117,28 @@ function zib_author_content()
     global $wp_query;
     $curauth   = $wp_query->get_queried_object();
     $author_id = $curauth->ID;
-    $is_mobile = wp_is_mobile();
 
     do_action('zib_author_main_content');
 
+    $tabs_args   = zib_get_author_main_tab_args($author_id);
+    $tab_swiper  = _pz('author_main_tab_swiper', false);
+    $tab_nav     = zib_get_main_tab_nav('nav', $tabs_args, 'author', $tab_swiper);
+    $tab_content = zib_get_main_tab_nav('content', $tabs_args, 'author', $tab_swiper);
+    if ($tab_nav && $tab_content) {
+        $html = '<div class="author-tab zib-widget">';
+        $html .= '<div class="affix-header-sm" offset-top="7">';
+        $html .= $tab_nav;
+        $html .= '</div>';
+        $html .= $tab_content;
+        $html .= '</div>';
+        echo $html;
+    }
+}
+
+//获取用户个人主页的tab args
+function zib_get_author_main_tab_args($author_id)
+{
+    $is_mobile = wp_is_mobile();
     $tabs_args = array();
     $tabs_opt  = _pz('author_main_tab_opt',
         array(
@@ -214,19 +232,8 @@ function zib_author_content()
         }
     }
 
-    $tab_swiper  = _pz('author_main_tab_swiper', false);
-    $tabs_args   = apply_filters('author_main_tabs_array', $tabs_args, $author_id);
-    $tab_nav     = zib_get_main_tab_nav('nav', $tabs_args, 'author', $tab_swiper);
-    $tab_content = zib_get_main_tab_nav('content', $tabs_args, 'author', $tab_swiper);
-    if ($tab_nav && $tab_content) {
-        $html = '<div class="author-tab zib-widget">';
-        $html .= '<div class="affix-header-sm" offset-top="7">';
-        $html .= $tab_nav;
-        $html .= '</div>';
-        $html .= $tab_content;
-        $html .= '</div>';
-        echo $html;
-    }
+    $tabs_args = apply_filters('author_main_tabs_array', $tabs_args, $author_id);
+    return $tabs_args;
 }
 
 function zib_get_author_tab_loader($key)
@@ -305,7 +312,7 @@ function zib_get_author_favorite_filter($author_id, $type = 'post', $orderby = '
 
     $orderby_class                   = 'ajax-next';
     $orderby_dropdown_but            = '';
-    $favorite_args[$type]['orderby'] = array_merge(['post__in' => '收藏时间'], $favorite_args[$type]['orderby']??[]);
+    $favorite_args[$type]['orderby'] = array_merge(['post__in' => '收藏时间'], $favorite_args[$type]['orderby'] ?? []);
     foreach ($favorite_args[$type]['orderby'] as $k => $v) {
         $active_class = $k == $orderby ? ' class="active"' : '';
         $orderby_dropdown_but .= '<li' . $active_class . '><a rel="nofollow" ajax-replace="true" class="' . $orderby_class . '" href="' . esc_url(add_query_arg(array('orderby' => $k), $this_url)) . '">' . $v . '</a></li>';

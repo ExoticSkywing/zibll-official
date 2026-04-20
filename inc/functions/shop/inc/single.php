@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2021-08-05 20:25:29
- * @LastEditTime : 2025-12-23 21:20:36
+ * @LastEditTime : 2026-03-12 12:31:02
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题|商城系统|商品页面函数
@@ -230,8 +230,8 @@ function zib_shop_single_content()
             ),
         );
 
-        $title                 = $related_config['title'] ?? '相关推荐';
-        $title                 = $title ? '<div class="box-body notop"><div class="title-theme">' . $title . '</div></div>' : '';
+        $title = $related_config['title'] ?? '相关推荐';
+        $title = $title ? '<div class="box-body notop"><div class="title-theme">' . $title . '</div></div>' : '';
 
         $related_html = '<div class="single-related-box mb20">' . $title . zib_get_ias_ajaxpager($ias_args) . '</div>';
     }
@@ -364,6 +364,23 @@ function zib_shop_get_product_cover($post = null)
                 'video'      => $cover_videos[0]['url'] ?? '',
             ),
         ];
+    }
+
+    //添加选项图片
+    $opt_args = $product_configs['product_options'] ?? [];
+    if ($opt_args) {
+        foreach ($opt_args as $opt_key => $opt) {
+            if (isset($opt['opts']) && is_array($opt['opts']) && $opt['opts']) {
+                foreach ($opt['opts'] as $opt_value_key => $opt_value) {
+                    if (isset($opt_value['image']) && $opt_value['image']) {
+                        $slides[] = array(
+                            'background' => $opt_value['image'],
+                            'attr'       => 'product-opt-index="' . $opt_key . '_' . $opt_value_key . '"',
+                        );
+                    }
+                }
+            }
+        }
     }
 
     $more_btns = zib_shop_get_cover_more_btns($post);

@@ -2,7 +2,7 @@
  * @Author: Qinver
  * @Url: zibll.com
  * @Date: 2021-04-26 11:32:56
- * @LastEditTime : 2025-07-18 16:07:23
+ * @LastEditTime : 2026-03-16 17:02:41
  */
 /*
  RequireJS 2.1.14 Copyright (c) 2010-2014, The Dojo Foundation All Rights Reserved.
@@ -75,6 +75,7 @@ tbquire.config({
 		'mini-touch'    : 'mini-touch.min',
 		'mini-upload'   : 'mini-upload.min',
 		'pay'           : _win.uri+'/zibpay/assets/js/pay.min',
+		'editextend'    : 'editextend.min',
 		'petite-vue'    : 'libs/petite-vue.iife',
 		'svg-icon'      : 'svg-icon',
 		'tcaptcha-sdk'  : ['https://turing.captcha.qcloud.com/TJCaptcha'],

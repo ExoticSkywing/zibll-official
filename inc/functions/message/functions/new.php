@@ -3,7 +3,7 @@
  * @Author        : Qinver
  * @Url           : zibll.com
  * @Date          : 2020-11-11 17:11:44
- * @LastEditTime : 2026-01-29 14:01:25
+ * @LastEditTime : 2026-03-11 12:17:11
  * @Email         : 770349780@qq.com
  * @Project       : Zibll子比主题
  * @Description   : 一款极其优雅的Wordpress主题
@@ -295,8 +295,6 @@ function zib_newmsg_trashed_post($post)
     $message .= '内容摘要：<br>';
     $message .= '<div class="muted-box" style=" padding:10px 15px;border-radius:8px;background:rgba(141, 141, 141, 0.05); line-height: 1.7;">' . trim(zib_str_cut(trim(strip_tags($post->post_content)), 0, 100, '...')) . '</div>';
     $message .= '发布时间：' . $post->post_date . '<br>';
-
-    $message .= '删除时间：' . $post->post_modified . '<br>';
     $message .= $msg ? '删除说明：' . $msg . '<br>' : '';
     $message .= '<br>';
 
